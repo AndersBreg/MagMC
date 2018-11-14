@@ -7,7 +7,10 @@ import processing.core.PVector;
 
 public class Parameters {
 
-	public int nSteps = 1000;
+	/** Number of steps aggregation and cell dimensions */
+	
+	public int nSteps;
+	public int aggregate = 2 << 11;
 	public int nX = 1;
 	public int nY = 1;
 	public int nZ = 1;
@@ -132,35 +135,5 @@ public class Parameters {
 
 	public void setInitConfig(Config newConfig) {
 		this.initial = newConfig;
-
-		// ArrayList<PVector> list = new ArrayList<PVector>();
-		// Iterator<Double> it = initial.iterator();
-		// while (it.hasNext()) {
-		// Double x = it.next();
-		// Double y = it.next();
-		// Double z = it.next();
-		// PVector vec = new PVector(x, y, z);
-		// list.add(vec);
-		// }
-		// this.initial = new PVector[list.size()];
-		// for (int i = 0; i < list.size(); i++) {
-		// this.initial[i] = list.get(i);
-		// }
 	}
-
-//	public void setInitial(BasisState state) {
-//		ArrayList<PVector> output;
-//		PVector[] list = state.get();
-//		for (int i = 0; i < nX; i++) {
-//			for (int j = 0; j < nY; j++) {
-//				for (int k = 0; k < nZ; k++) {
-//					PVector[] basis = crys.get();
-//					for (int basisIndex = 0; basisIndex < nBasis; basisIndex++) {
-//						
-//					}
-//				}
-//			}
-//		}
-//		this.initial = crys.get();
-//	}
 }

@@ -3,7 +3,7 @@ package constants;
 public enum Element {
 	Ni(0, 0.67, -0.05, 1.04, -0.11, 0.3, 0.339, 1.82, 0, 1.0), 
 	Co(0.04, 0.05, 0, 0.35, -0.0728, -0.1131, 2.0277, 0, 0.8576, 1.5),
-	Test(0, 0, 0, 0, 0, 0, 0, 0, 0.0, 1.0); // Without DM interactions
+	Test(0, 0, 0, 0, 0, 0, 0, 0, 1.0, 1.0); // Without DM interactions
 
 	// (0.5828, 0.3646, 0.2541)
 	

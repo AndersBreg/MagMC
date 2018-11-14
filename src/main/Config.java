@@ -17,6 +17,7 @@ public class Config {
 		genNewConfig();
 	}
 	private void genNewConfig() {
+		// TODO Auto-generated method stub
 		
 	}
 }
