@@ -7,17 +7,18 @@ import main.*;
 import processing.core.PApplet;
 import javax.swing.*;
 
+import constants.Crystal;
 import constants.Element;
 
 public class simulationRunner {
-
+	
 	private static double tStart = 1;
-	private static double hStart = 1;
+	private static double hStart = 0;
 
-	private static double dT = 2;
+	private static double dT = 5;
 	private static double dH = 2;
 
-	private static double tEnd = 20;
+	private static double tEnd = 50;
 	private static double hEnd = hStart + 1;
 
 	private static int tArrSize = (int) Math.ceil((tEnd - tStart) / dT);// Numbers of temperatures to simulate
@@ -25,11 +26,13 @@ public class simulationRunner {
 
 	private static double[][] T_H_Arr;
 
-	private static String location = "C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data\\after_git_impl\\";
+	private static String location = "C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data\\Ni_Check_2\\";
 	private static String name = "Ni_sim_2,2,2";
 	private static String configFilename = "config";
-	private static boolean saveConfig = true;
-	private static boolean loadConfig = true;
+	private static File logFile = new File("C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data\\logFile.txt");
+	
+	private static boolean saveConfig = false;
+	private static boolean loadConfig = false;
 	private static int N = tArrSize * hArrSize; // Total numbers of simulations;
 
 	static Visualizer vis;
@@ -57,7 +60,7 @@ public class simulationRunner {
 
 		for (int i = 0; i < N; i++) {
 			String filename = String.format(name + "_T=%1.2f_and_H=%1.2f", T_H_Arr[i][0], T_H_Arr[i][1]);
-			paramRange[i] = new Parameters(new int[] { 1000000, 1, 1, 1 },
+			paramRange[i] = new Parameters(new int[] { 2 << 17, 2, 2, 2 },
 					new double[] { T_H_Arr[i][0], 0, 0, T_H_Arr[i][1] },
 					new boolean[] { true },
 					new String[] {
@@ -75,11 +78,12 @@ public class simulationRunner {
 		if (parallel) {
 			for (int i = 0; i < N; i++) {
 				if(loadConfig) {
-					String configFile = location + String.format(name +"_config_T=%1.2f_H=%1.2f.txt", T_H_Arr[i][0], T_H_Arr[i][1]);
+					String configFile = location + name + String.format("_config_T=%1.2f_H=%1.2f.txt", T_H_Arr[i][0], T_H_Arr[i][1]);
 					sim[i] = new Simulator(paramRange[i], configFile);
 				} else {
 					sim[i] = new Simulator(paramRange[i]);	
 				}
+				sim[i].configFromBasisState(Crystal.Fz); // Forces a basis state onto the state
 				threads[i] = new Thread(sim[i]);
 				threads[i].start();
 			}
@@ -93,9 +97,10 @@ public class simulationRunner {
 			waitMessage(startTime, 0);
 			for (int i = 0; i < N; i++) {
 				threads[i].join();
+				writeToLogFile(sim[i]);
 				if (saveConfig) {
-					String configFile = location
-							+ String.format(name + "_config_T=%1.2f_H=%1.2f.txt", T_H_Arr[i][0], T_H_Arr[i][1]);
+					String configFile = location + name
+							+ String.format("_config_T=%1.2f_H=%1.2f.txt", T_H_Arr[i][0], T_H_Arr[i][1]);
 					sim[i].saveConfig(configFile);
 				}
 			}
@@ -106,6 +111,7 @@ public class simulationRunner {
 				threads[i].start();
 				waitMessage(startTime, i);
 				threads[i].join();
+				writeToLogFile(sim[i]);
 				sim[i].saveConfig(configFile);
 				if(i+1 != sim.length) {
 					sim[i+1].loadConfig(configFile);
@@ -133,6 +139,18 @@ public class simulationRunner {
 							- TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(ETA)));
 			System.out.println(", estimated finish time: " + ETAString);
 			Thread.sleep(1000);
+		}
+	}
+	
+	private static void writeToLogFile(Simulator sim) {
+		System.out.println("Prints additional data to path: " + logFile.getAbsolutePath());
+		try {
+			FileWriter writer = new FileWriter(logFile, true);
+			writer.write("File:" + sim.outputFile.getName() + " has ratio of rejected samples "
+					+ ((double) sim.nRejects / (double) sim.param.nSteps) + "\n");
+			writer.close();
+		} catch (IOException e) {
+			System.err.println("Caught Exception: " + e.getMessage());
 		}
 	}
 
