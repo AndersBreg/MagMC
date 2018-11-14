@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="src/core.jar"/>
+	<classpathentry kind="lib" path="src/gluegen-rt-natives-windows-amd64.jar"/>
+	<classpathentry kind="lib" path="src/gluegen-rt-natives-windows-i586.jar"/>
+	<classpathentry kind="lib" path="src/gluegen-rt.jar"/>
+	<classpathentry kind="lib" path="src/jogl-all-natives-windows-amd64.jar"/>
+	<classpathentry kind="lib" path="src/jogl-all-natives-windows-i586.jar"/>
+	<classpathentry kind="lib" path="src/jogl-all.jar"/>
+	<classpathentry kind="lib" path="C:/Users/anders/Documents/Processing/libraries/peasycam/library/peasycam.jar"/>
+	<classpathentry kind="lib" path="C:/Users/anders/Documents/Processing/libraries/peasycam/library/peasy-math.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
