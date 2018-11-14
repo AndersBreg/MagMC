@@ -39,16 +39,22 @@ public class Simulator implements Runnable {
 	 * Da, Db, Dc, Hx, Hy, Hz
 	 */
 	public Parameters param;
-	public Config config;
 
 	// Output values
 	public double energySingle;
 	private double energyTotal;
+	
 	private double sumEnergy = 0;
 	private double sumEnergySq = 0;
-	private double sumX;
-	private double sumY;
-	private double sumZ;
+	
+	private double sumMuX;
+	private double sumMuX_Sq;
+	
+	private double sumMuY;
+	private double sumMuY_Sq;
+	
+	private double sumMuZ;
+	private double sumMuZ_Sq;
 
 	private Random rand;
 	/*
@@ -59,12 +65,12 @@ public class Simulator implements Runnable {
 	 */
 	private MyVector mid;
 	private String filename;
-	private File outputFile;
-	private static File logFile = new File("C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data\\logFile.txt");
+	public File outputFile;
+	
 	private static final String defaultDir = "C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data\\";
 	
 	private double delta = 0.5;
-	private int nRejects = 0;
+	public int nRejects = 0;
 	private static final double invBoltz = 11.6045f; // inverse of the Boltzmann constant in units K / meV
 	
 	/**
@@ -87,16 +93,37 @@ public class Simulator implements Runnable {
 				}
 			}
 		}
+		System.out.println("No configuration specified, generates new.");
+		newConfig();
+	}
+	
+	public Simulator(Parameters newParam, String configFile) throws IOException {
+		this.param = newParam;
+		setup();
+		
+		if (param.filename.equals("")) {
+			filename = String.format("Test_T=%1.2f.txt", param.temp);
+			System.out.println("No filename given, output file set to " + filename);
+			outputFile = Paths.get(param.dir, filename).toFile();
+		} else {
+			outputFile = Paths.get(param.dir, param.filename + param.extension).toFile();
+			for (int i = 0; i < 10; i++) {
+				if (outputFile.exists()) {
+					outputFile = Paths.get(param.dir, param.filename + "_" + i + param.extension).toFile();
+				}
+			}
+		}
+		loadConfig(configFile);
 	}
 	
 	public void setup() {
-		nAtoms = param.nX * param.nY * param.nZ * nBasis;
+		nAtoms = param.nX * param.nY * param.nZ * nBasis / 8;
 
 		positions = new MyVector[param.nX][param.nY][param.nZ];
 		atomType = new Element[param.nX][param.nY][param.nZ];
 		spins = new MyVector[param.nX][param.nY][param.nZ];
 
-		rand = new Random(0);
+		rand = new Random();
 
 		mid = new MyVector(param.nX * 0.25, param.nY * 0.25, param.nZ * 0.25);
 		mid = scaleVec(a, b, c, mid);
@@ -108,32 +135,6 @@ public class Simulator implements Runnable {
 			position = scaleVec(a/2, b/2, c/2, position);
 			positions[index[0]][index[1]][index[2]] = position.sub(mid).mult(scaling);
 		}
-		if (param.initial != null) {
-			loadConfig(param.initial);
-		} else {
-			System.out.println("No configuration specified, generates new.");
-			newConfig();
-		}		
-	}
-
-	private void loadConfig(Config initial) {
-		Iterator<MyVector> itSpin = initial.spins.iterator();
-		Iterator<Element> itElem = initial.elements.iterator();
-		Iterator<int[]> it = iterateAtoms();
-		while (it.hasNext()) {
-			int[] index = (int[]) it.next();
-			setSpin(index, itSpin.next());
-			setAtom(index, itElem.next());			
-		}
-//		for (int i = 0; i < param.nX; i++) {
-//			for (int j = 0; j < param.nY; j++) {
-//				for (int k = 0; k < param.nZ; k++) {
-//					if (crys.isValid(i, j, k)) {
-//						int[] index = normIndex(new int[] { i, j, k });
-//					}
-//				}
-//			}
-//		}
 	}
 
 	@Override
@@ -146,7 +147,6 @@ public class Simulator implements Runnable {
 
 		try {
 			PrintStream out = new PrintStream(outputFile);
-			// out.println("Parameters: ");
 			String[] names = Parameters.getNames();
 			for (int i = 0; i < names.length; i++) {
 				out.print(names[i] + ", ");
@@ -166,24 +166,11 @@ public class Simulator implements Runnable {
 			System.err.println("Caught IOException: " + e.getMessage());
 		}
 		System.out.println("Done!");
-
-		if (logFile != null) {
-			System.out.println("Prints additional data to path: " + logFile.getAbsolutePath());
-//			logFile = path.toAbsolutePath().toFile();
-			try {
-				FileWriter writer = new FileWriter(logFile, true);
-//				PrintStream out = new PrintStream(writer);
-				writer.write("The number of rejected times: " + nRejects + " in percent " + ((double)nRejects/(double)param.nSteps) + "%\n");
-				writer.close();
-			} catch (IOException e) {
-				System.err.println("Caught Exception: " + e.getMessage());
-			}
-		}
 	}
 
 	private void simulate(PrintStream out) {
-		energySingle = calcTotalEnergy(spins);
-		energyTotal = calcTotalEnergy(spins);
+		energySingle = calcTotalEnergy();
+		energyTotal = calcTotalEnergy();
 		
 		while (progress < param.nSteps) {
 			progress += 1;
@@ -196,33 +183,66 @@ public class Simulator implements Runnable {
 				e.printStackTrace();
 			}
 			
-//			energyTotal = calcTotalEnergy(spins);
+			double energyPrAtom = energySingle/nAtoms; 
+			double muX = calcMagnetization(0);
+			double muY = calcMagnetization(1);
+			double muZ = calcMagnetization(2);
+			sumEnergy += energyPrAtom;
+			sumEnergySq += energyPrAtom * energyPrAtom;
+			sumMuX += muX;
+			sumMuY += muY;
+			sumMuZ += muZ;
+			sumMuX_Sq += muX*muX;
+			sumMuY_Sq += muY*muY;
+			sumMuZ_Sq += muZ*muZ;
 			
-//			sumEnergy += energySingle;
-//			sumEnergySq += energySingle * energySingle;
-			if (!param.printFullArray) {
-				sumX += calcMagnetization(0);
-				sumY += calcMagnetization(1);
-				sumZ += calcMagnetization(2);
-			}
-			if (param.printFullArray) {
-				out.print(String.format("%1.8e", energySingle/nAtoms));
+			if (param.printFullArray && progress % param.aggregate == 0) {
+				// TODO Write these correctly:
+				double energy_Mean = sumEnergy/param.aggregate;
+				double energy_Var = (sumEnergySq - energy_Mean * energy_Mean)/param.aggregate;
+				
+				double muX_Mean = sumMuX/param.aggregate;
+				double muX_Var = (sumMuX_Sq - muX_Mean * muX_Mean)/param.aggregate;
+				
+				double muY_Mean = sumMuY/param.aggregate;
+				double muY_Var = (sumMuY_Sq - muY_Mean * muY_Mean)/param.aggregate;
+				
+				double muZ_Mean = sumMuZ/param.aggregate;
+				double muZ_Var = (sumMuZ_Sq - muZ_Mean * muZ_Mean)/param.aggregate;
+				
+				out.print(String.format("%1.8e", energy_Mean));
+				out.print(", ");
+				out.print(String.format("%1.8e", energy_Var));
+				out.print(", ");
+				
+				out.print(String.format("%1.8e", muX_Mean));
+				out.print(", ");
+				out.print(String.format("%1.8e", muX_Var));
+				out.print(", ");
+				
+				out.print(String.format("%1.8e", muY_Mean));
+				out.print(", ");
+				out.print(String.format("%1.8e", muY_Var));
+				out.print(", ");
+				
+				out.print(String.format("%1.8e", muZ_Mean));
+				out.print(", ");
+				out.print(String.format("%1.8e", muZ_Var));
 //				out.print(", ");
-//				out.print(String.format("%1.8e", energyTotal));
-//				out.print(", ");
-//				out.print(String.format("%1.8e", dE));
+				
 				out.println();
+				
+				sumEnergy = 0;
+				sumEnergySq = 0;
 			}
-			// ^^ Estimated space-use : Energy 4 bytes, spin 6 bytes, other 3 bytes, total:
-			// 13 bytes.
 		}
 		if (!param.printFullArray) {
 			double meanEnergy = sumEnergy / (double) param.nSteps / nAtoms;
 			double varEnergy = (sumEnergySq - sumEnergy * sumEnergy / (double) param.nSteps) / (double) param.nSteps
 					/ nAtoms;
-			double meanX = sumX / (double) param.nSteps / nAtoms;
-			double meanY = sumY / (double) param.nSteps / nAtoms;
-			double meanZ = sumZ / (double) param.nSteps / nAtoms;
+			double meanX = sumMuX / (double) param.nSteps / nAtoms;
+			double meanY = sumMuY / (double) param.nSteps / nAtoms;
+			double meanZ = sumMuZ / (double) param.nSteps / nAtoms;
 			out.print(meanEnergy + ", ");
 			out.print(varEnergy + ", ");
 			out.print(meanX + ", ");
@@ -232,17 +252,17 @@ public class Simulator implements Runnable {
 	}
 
 	private double iterateRandomSingle(double temp) {
-		int[] index = chooseRandomAtom();
+		int[] index = chooseRandomAtom(rand);
 		MyVector old = getSpinDir(index).copy();
 
 		// Before change
-		double oldEnergy = calcAtomEnergy(spins, index);
+		double oldEnergy = calcAtomEnergy(index);
 		
 		// Create a new sample / make a small change:
 		setSpin(index, markovSurface(getSpinDir(index)));
 
 		// Calculate energy with new vector:
-		double newEnergy = calcAtomEnergy(spins, index);
+		double newEnergy = calcAtomEnergy(index);
 		double delE = newEnergy - oldEnergy;
 		if (rand.nextDouble() <= Math.min(1, Math.exp(-delE * invBoltz / temp))) {
 			energySingle = energySingle + delE;
@@ -254,7 +274,7 @@ public class Simulator implements Runnable {
 		}
 	}
 
-	private double calcTotalEnergy(MyVector[][][] system) {
+	private double calcTotalEnergy() {
 		double E = 0;
 		Iterator<int[]> it = iterateAtoms();
 		while (it.hasNext()) {
@@ -266,7 +286,7 @@ public class Simulator implements Runnable {
 		return E;
 	}
 
-	private double calcAtomEnergy(MyVector[][][] system, int[] index) {
+	private double calcAtomEnergy(int[] index) {
 		double E = 0;
 		
 		// Field energy:
@@ -310,7 +330,6 @@ public class Simulator implements Runnable {
 	private double calcAniEnergy(int[] index) {
 		double E = 0;
 		MyVector S = getSpinDir(index);
-//		int atomId = getAtom(index).getId();
 		E += getAtom(index).Dx * S.x * S.x;
 		E += getAtom(index).Dy * S.y * S.y;
 		E += getAtom(index).Dz * S.z * S.z;
@@ -324,7 +343,7 @@ public class Simulator implements Runnable {
 			int[] index = (int[]) it.next();
 			mu += getSpinDir(index).getCoord(coord);
 		}
-		return mu;
+		return mu/nAtoms;
 	}
 
 	private MyVector randomVector() {
@@ -370,7 +389,7 @@ public class Simulator implements Runnable {
 		return atomType[index[0]][index[1]][index[2]];
 	}
 
-	private int[] chooseRandomAtom() {
+	private int[] chooseRandomAtom(Random rand) {
 		int X = rand.nextInt(param.nX); 
 		int Y = rand.nextInt(param.nY);
 		int W = rand.nextInt(param.nZ/2);
@@ -463,7 +482,70 @@ public class Simulator implements Runnable {
 		while (it.hasNext()) {
 			int[] index = it.next();
 			setSpin(index, randomVector());
-			setAtom(index, Element.Test);	
+			setAtom(index, Element.Ni);	
+		}
+	}
+
+
+	public void configFromBasisState(MyVector[] basisState) {
+		Iterator<int[]> it = iterateUnitCells();
+		while (it.hasNext()) {
+			int[] unitCellIndex = (int[]) it.next();
+			int[][] basis = crys.getBasisNB();
+			for (int i = 0; i < basis.length; i++) {
+				int[] index = addIndex(unitCellIndex, basis[i]);
+				setSpin(index, basisState[i]);
+			}
+		}
+	}	
+	
+	public void loadConfig(String filename) throws IOException {
+		Iterator<int[]> it = iterateAtoms();
+		BufferedReader in = new BufferedReader(new FileReader(filename));
+		int i = 0;
+		while (it.hasNext()) {
+			int[] index = it.next();
+			String line = in.readLine();
+			if (line == null) {
+				break;
+			} else {
+				StringTokenizer st = new StringTokenizer(line);
+				double x = Double.parseDouble(st.nextToken());
+				double y = Double.parseDouble(st.nextToken());
+				double z = Double.parseDouble(st.nextToken());
+				MyVector vec = new MyVector(x, y, z);
+				setSpin(index, vec);
+	
+				Element elem = Element.valueOf(st.nextToken());
+				setAtom(index, elem);
+			}
+			i += 1;
+		}
+		in.close();
+		System.out.println("Loaded in " + i + " spin orientations.");
+	}
+
+	public void saveConfig(String filename) {
+		File file = new File(filename);
+		Path path = file.toPath();
+	
+		file = path.toAbsolutePath().toFile();
+		System.out.println("Prints end configuration to path: " + file.getAbsolutePath());
+	
+		try {
+			PrintStream out = new PrintStream(file);
+			Iterator<int[]> it = iterateAtoms();
+			while(it.hasNext()) {
+				int[] index = it.next();
+				MyVector spin = getSpinDir(index); 
+				out.print(spin.x + " ");
+				out.print(spin.y + " ");
+				out.print(spin.z + " ");
+				out.println(getAtom(index));
+			}
+			out.close();
+		} catch (IOException e) {
+			System.err.println("Caught IOException: " + e.getMessage());
 		}
 	}
 
