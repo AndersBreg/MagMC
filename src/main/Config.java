@@ -2,6 +2,8 @@ package main;
 
 import java.util.List;
 
+import constants.Element;
+
 public class Config {
 
 	List<MyVector> spins;
@@ -15,7 +17,6 @@ public class Config {
 		genNewConfig();
 	}
 	private void genNewConfig() {
-		// TODO Auto-generated method stub
 		
 	}
 }

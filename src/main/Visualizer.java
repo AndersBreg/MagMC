@@ -10,10 +10,10 @@ import peasy.*;
 
 public class Visualizer extends PApplet {
 
-	Simulator_new master;
+	Simulator master;
 	PeasyCam cam;
 
-	public Visualizer(Simulator_new sim) {
+	public Visualizer(Simulator sim) {
 		this.master = sim;
 	}
 
@@ -57,13 +57,13 @@ public class Visualizer extends PApplet {
 		translate(20, 0, 0);
 	
 		stroke(color(255, 0, 0));
-		line(0, 0, 0, Simulator_new.scaling, 0, 0);
+		line(0, 0, 0, Simulator.scaling, 0, 0);
 	
 		stroke(color(0, 255, 0));
-		line(0, 0, 0, 0, Simulator_new.scaling, 0);
+		line(0, 0, 0, 0, Simulator.scaling, 0);
 	
 		stroke(color(0, 0, 255));
-		line(0, 0, 0, 0, 0, Simulator_new.scaling);
+		line(0, 0, 0, 0, 0, Simulator.scaling);
 	
 		// arrow(new PVector(1,0,0));
 		// arrow(new PVector(0,1,0));

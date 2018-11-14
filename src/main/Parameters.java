@@ -2,6 +2,7 @@ package main;
 
 import java.util.List;
 
+import constants.Crystal;
 import processing.core.PVector;
 
 public class Parameters {
