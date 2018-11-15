@@ -77,7 +77,7 @@ public class Simulator implements Runnable {
 	 * Parameter values: #steps, nX, nY, nZ, Temperature, Ja, Jb, Jc, Jbc, Jac, Jbc,
 	 * Da, Db, Dc, Hx, Hy, Hz
 	 */
-	public Simulator(Parameters newParam) {
+	public Simulator(Parameters newParam) { // TODO Re-write constructor to accept a filename.
 		this.param = newParam;
 		setup();
 		
@@ -97,6 +97,7 @@ public class Simulator implements Runnable {
 		newConfig();
 	}
 	
+	 // TODO Re-write constructor to accept a filename.
 	public Simulator(Parameters newParam, String configFile) throws IOException {
 		this.param = newParam;
 		setup();
@@ -158,7 +159,7 @@ public class Simulator implements Runnable {
 			}
 			out.println();
 			out.println("Output: ");
-			out.println("energy, variance of energy");
+			out.println("energy, en. var, muX, muX var, muY, muY var, muZ, muZ var");
 			simulate(out);
 
 			out.close();
@@ -197,7 +198,6 @@ public class Simulator implements Runnable {
 			sumMuZ_Sq += muZ*muZ;
 			
 			if (param.printFullArray && progress % param.aggregate == 0) {
-				// TODO Write these correctly:
 				double energy_Mean = sumEnergy/param.aggregate;
 				double energy_Var = (sumEnergySq - energy_Mean * energy_Mean)/param.aggregate;
 				
@@ -253,13 +253,13 @@ public class Simulator implements Runnable {
 
 	private double iterateRandomSingle(double temp) {
 		int[] index = chooseRandomAtom(rand);
-		MyVector old = getSpinDir(index).copy();
+		MyVector old = getSpin(index).copy();
 
 		// Before change
 		double oldEnergy = calcAtomEnergy(index);
 		
 		// Create a new sample / make a small change:
-		setSpin(index, markovSurface(getSpinDir(index)));
+		setSpin(index, markovSurface(getSpin(index)));
 
 		// Calculate energy with new vector:
 		double newEnergy = calcAtomEnergy(index);
@@ -303,7 +303,7 @@ public class Simulator implements Runnable {
 
 	private double calcCouplingEnergy(int[] indexA) {
 		double E = 0;
-		MyVector S = getSpinDir(indexA);
+		MyVector S = getSpin(indexA);
 		Element atomA = getAtom(indexA);
 		
 		int[][][] allNeighbours = crys.getNNIndices();
@@ -314,7 +314,7 @@ public class Simulator implements Runnable {
 				int[] spec_J_nb = nb_with_specific_J[n];
 				int[] indexB = normIndex(addIndex(indexA, spec_J_nb));
 				Element atomB = getAtom(indexB);
-				E += atomA.getCoupling(atomB, nJ) * S.dot(getSpinDir(indexB))/2;
+				E += atomA.getCoupling(atomB, nJ) * S.dot(getSpin(indexB))/2;
 			}
 		}
 		return E;
@@ -322,14 +322,14 @@ public class Simulator implements Runnable {
 
 	private double calcFieldEnergy(int[] index) {
 		double E = 0;
-		MyVector S = getSpinDir(index);
+		MyVector S = getSpin(index);
 		E = -S.dot(param.H) * getAtom(index).spin;
 		return E;
 	}
 	
 	private double calcAniEnergy(int[] index) {
 		double E = 0;
-		MyVector S = getSpinDir(index);
+		MyVector S = getSpin(index);
 		E += getAtom(index).Dx * S.x * S.x;
 		E += getAtom(index).Dy * S.y * S.y;
 		E += getAtom(index).Dz * S.z * S.z;
@@ -341,7 +341,7 @@ public class Simulator implements Runnable {
 		Iterator<int[]> it = iterateAtoms();
 		while (it.hasNext()) {
 			int[] index = (int[]) it.next();
-			mu += getSpinDir(index).getCoord(coord);
+			mu += getSpin(index).getCoord(coord);
 		}
 		return mu/nAtoms;
 	}
@@ -460,7 +460,7 @@ public class Simulator implements Runnable {
 		}
 	}
 
-	public MyVector getSpinDir(int[] index) {
+	public MyVector getSpin(int[] index) {
 		return spins[index[0]][index[1]][index[2]];
 	}
 	
@@ -476,7 +476,22 @@ public class Simulator implements Runnable {
 		};
 	}
 
-	/** Generates a new spin-configuration */
+	public double productWithBasisState(MyVector[] basisState) {
+		double proj = 0;
+		Iterator<int[]> it = iterateUnitCells();
+		while (it.hasNext()) {
+			int[] unitCellIndex = (int[]) it.next();
+			int[][] basis = crys.getBasisNB();
+			for (int i = 0; i < basis.length; i++) {
+				int[] index = addIndex(unitCellIndex, basis[i]);
+				proj += getSpin(index).dot(basisState[i]);
+			}
+		}
+		return proj;
+	}	
+	
+	
+	/** Generates and sets spin-configuration */
 	private void newConfig() {
 		Iterator<int[]> it = iterateAtoms();
 		while (it.hasNext()) {
@@ -537,7 +552,7 @@ public class Simulator implements Runnable {
 			Iterator<int[]> it = iterateAtoms();
 			while(it.hasNext()) {
 				int[] index = it.next();
-				MyVector spin = getSpinDir(index); 
+				MyVector spin = getSpin(index); 
 				out.print(spin.x + " ");
 				out.print(spin.y + " ");
 				out.print(spin.z + " ");
