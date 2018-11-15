@@ -17,18 +17,6 @@ public class Parameters {
 
 	public double temp = 1;
 
-	public double Ja = 0;
-	public double Jb = 0;
-	public double Jc = 0;
-	public double Jbc = 0;
-	public double Jac = 0;
-	public double Jab = 0;
-
-	/** Single-ion anisotropy constants */
-	public double Da = 0;
-	public double Db = 0;
-	public double Dc = 0;
-
 	/** Applied H-field */
 	public MyVector H = new MyVector(0, 0, 0);
 
@@ -52,11 +40,11 @@ public class Parameters {
 
 	public Crystal basis;
 
-	private static final String[] paramNames = { "#Steps", "nX", "nY", "nZ", "Temperature", "Hx", "Hy", "Hz", "Print full data", "Save config" };
+	private static final String[] paramNames = { "#Steps", "nX", "nY", "nZ", "Temperature", "Hx", "Hy", "Hz", "Save config" };
 //	public final double[] Jlist;
 
 	/**
-	 * Initialize with parameters: arrI: #steps, nX, nY, nZ arrF: temperature, Da, Db, Dc, Hx, Hy, Hz \n
+	 * Initialize with parameters: arrI: #steps, nX, nY, nZ arrF: temperature, Hx, Hy, Hz \n
 	 */
 	public Parameters(final int[] arrI, final double[] arrF, final boolean[] options, final String[] strings) {
 		if (arrI.length != nIntParam || arrF.length != nFloatParam) {
@@ -69,11 +57,7 @@ public class Parameters {
 		}
 
 		temp = arrF[0];
-//		Jlist = new double[] {};
-
-//		Da = arrF[7];
-//		Db = arrF[8];
-//		Dc = arrF[9];
+		
 		H = new MyVector(arrF[1], arrF[2], arrF[3]);
 
 		nSteps = arrI[0];
@@ -84,16 +68,12 @@ public class Parameters {
 		printFullArray = options[0];
 		
 		dir = strings[0];
-		filename = strings[1];
+		filename = strings[1]; // TODO Re write such that outputfile is directly given to simmulator.
 		extension = strings[2];
 	}
 
 	public static String[] getNames() {
 		return paramNames;
-	}
-
-	public double[] getJList() {
-		return new double[] { Ja, Jb, Jc, Jbc, Jbc, Jac, Jac, Jab, Jab };
 	}
 
 	public double[] asList() {
