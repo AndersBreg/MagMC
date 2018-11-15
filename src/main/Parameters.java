@@ -10,8 +10,8 @@ public class Parameters {
 	/** Number of steps aggregation and cell dimensions */
 	
 	public int nSteps;
-	public int aggregate = 2 << 11;
-	public int nX = 1;
+	public int aggregate = 2 << 10;
+	public int nX = 1; // TODO Shoud be changed to be half as large and all references to be 2*nX
 	public int nY = 1;
 	public int nZ = 1;
 
