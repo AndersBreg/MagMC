@@ -12,22 +12,22 @@ import constants.Element;
 
 public class simulationRunner {
 	
-	private static double tStart = 2;
-	private static double hStart = 0;
+	private static double tStart = 1.7;
+	private static double hStart = 10;
 
-	private static double dT = 40;
-	private static double dH = 5;
+	private static double dT = 14;
+	private static double dH = 0.2;
 
-	private static double tEnd = 4;
-	private static double hEnd = 2;
+	private static double tEnd = 4; // In kelvin
+	private static double hEnd = 14; // In tesla
 
 	private static int tArrSize = (int) Math.ceil((tEnd - tStart) / dT);// Numbers of temperatures to simulate
 	private static int hArrSize = (int) Math.ceil((hEnd - hStart) / dH);// Numbers of fields to simulate
 
 	private static double[][] T_H_Arr;
 
-	private static String location = "C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data\\alloy_test\\";
-	private static String name = "Ni_sim";
+	private static String location = "C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data\\LiNiPO4_phase_transition\\";
+	private static String name = "Co_sim";
 	private static String configFilename = "config";
 	private static File logFile = new File("C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data\\logFile.txt");
 	
@@ -59,15 +59,15 @@ public class simulationRunner {
 		// [ -, -, -, -, -, -] Pure Co []
 
 		for (int i = 0; i < N; i++) {
-			String filename = name + String.format("_T=%1.2f_H=%1.2f", T_H_Arr[i][0],T_H_Arr[i][1]); 
+			String filename = name + String.format("_T=%1.2f_Hb=%1.2f", T_H_Arr[i][0], T_H_Arr[i][1]); 
 					/*String.format("_(%d,%d,%d)_T=%1.2f_H=%1.2f.txt", 
 					paramRange[i].nX/2, 
 					paramRange[i].nY/2, 
 					paramRange[i].nZ/2, 
 					paramRange[i].temp,
 					paramRange[i].H.z);*/ // TODO required re-writing the simulator constructor.
-			paramRange[i] = new Parameters(new int[] { 2 << 16, 2, 2, 2 },
-					new double[] { T_H_Arr[i][0], 0, 0, T_H_Arr[i][1] },
+			paramRange[i] = new Parameters(new int[] { 2 << 18, 3, 3, 3 },
+					new double[] { T_H_Arr[i][0], 0, 0, T_H_Arr[i][1]},
 					new boolean[] { true },
 					new String[] {
 						location, 
@@ -84,7 +84,7 @@ public class simulationRunner {
 			for (int i = 0; i < N; i++) {
 				if(loadConfig) {
 					String configFile = location + name + 
-							String.format("_config_(%d,%d,%d)_T=%1.2f_H=%1.2f.txt", 
+							String.format("_config_(%d,%d,%d)_T=%1.2f_Hb=%1.2f.txt", 
 									paramRange[i].nX/2, 
 									paramRange[i].nY/2, 
 									paramRange[i].nZ/2, 
@@ -94,7 +94,7 @@ public class simulationRunner {
 				} else {
 					sim[i] = new Simulator(paramRange[i]);
 				}
-				sim[i].setElementFraction(Element.Co, 0.90);
+				sim[i].setElementFraction(Element.Ni, 0.999);
 				sim[i].configFromBasisState(Crystal.Cz); // Forces a basis state onto the state
 				threads[i] = new Thread(sim[i]);
 				threads[i].start();
@@ -112,7 +112,7 @@ public class simulationRunner {
 				writeToLogFile(sim[i]);
 				if (saveConfig) {
 					String configFile = location + name
-							+ String.format("_config_(%d,%d,%d)_T=%1.2f_H=%1.2f.txt", 
+							+ String.format("_config_(%d,%d,%d)_T=%1.2f_Hb=%1.2f.txt", 
 									paramRange[i].nX/2, 
 									paramRange[i].nY/2, 
 									paramRange[i].nZ/2, 
