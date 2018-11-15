@@ -19,11 +19,13 @@ public class Simulator implements Runnable {
 	 * 4.70] Å; From Phys. Rev. 104420 (2017)
 	 */
 
+	private static final String PREC = "%1.8e";
 	public static final float a = 10.02f;
 	public static final float b = 5.86f;
 	public static final float c = 4.68f;
 	public static final float scaling = 1;
 
+	private static final double invBoltz = 11.6045f; // inverse of the Boltzmann constant in units K / meV
 	public Crystal crys = Crystal.FCC;
 	public MyVector[] basis = crys.get();
 	public int nBasis = basis.length; 
@@ -71,8 +73,12 @@ public class Simulator implements Runnable {
 	
 	private double delta = 0.5;
 	public int nRejects = 0;
-	private static final double invBoltz = 11.6045f; // inverse of the Boltzmann constant in units K / meV
-	
+	private double sumCZ;
+	private double sumCZ_Sq;
+	private double sumCX;
+	private double sumCX_Sq;
+	private double sumCY;
+	private double sumCY_Sq;
 	/**
 	 * Parameter values: #steps, nX, nY, nZ, Temperature, Ja, Jb, Jc, Jbc, Jac, Jbc,
 	 * Da, Db, Dc, Hx, Hy, Hz
@@ -152,14 +158,18 @@ public class Simulator implements Runnable {
 			for (int i = 0; i < names.length; i++) {
 				out.print(names[i] + ", ");
 			}
+			out.print("Ni frac, Co frac, Fe frac, ");
 			out.println();
 			double[] parameters = param.asList();
 			for (int i = 0; i < parameters.length; i++) {
 				out.print(parameters[i] + ", ");
 			}
+			out.print(getFraction(Element.Ni) + ", ");
+			out.print(getFraction(Element.Co) + ", ");
+			out.print(getFraction(Element.Fe) + ", ");
 			out.println();
 			out.println("Output: ");
-			out.println("energy, en. var, muX, muX var, muY, muY var, muZ, muZ var");
+			out.println("energy, en. var, muX, muX var, muY, muY var, muZ, muZ var, Cx, Cx var, Cy, Cy var, Cz, Cz var");
 			simulate(out);
 
 			out.close();
@@ -185,17 +195,33 @@ public class Simulator implements Runnable {
 			}
 			
 			double energyPrAtom = energySingle/nAtoms; 
-			double muX = calcMagnetization(0);
-			double muY = calcMagnetization(1);
-			double muZ = calcMagnetization(2);
+			double muX = productWithBasisState(Crystal.Fx); // Alternative use calcMagnetization(0);
+			double muY = productWithBasisState(Crystal.Fy);
+			double muZ = productWithBasisState(Crystal.Fz);
+			double cX = productWithBasisState(Crystal.Cx);
+			double cY = productWithBasisState(Crystal.Cy);
+			double cZ = productWithBasisState(Crystal.Cz);
+			
 			sumEnergy += energyPrAtom;
 			sumEnergySq += energyPrAtom * energyPrAtom;
+			
 			sumMuX += muX;
-			sumMuY += muY;
-			sumMuZ += muZ;
 			sumMuX_Sq += muX*muX;
+			
+			sumMuY += muY;
 			sumMuY_Sq += muY*muY;
+			
+			sumMuZ += muZ;
 			sumMuZ_Sq += muZ*muZ;
+
+			sumCX += cX;
+			sumCX_Sq += cX*cX;
+
+			sumCY += cY;
+			sumCY_Sq = cY*cY;
+
+			sumCZ += cZ;
+			sumCZ_Sq += cZ*cZ;
 			
 			if (param.printFullArray && progress % param.aggregate == 0) {
 				double energy_Mean = sumEnergy/param.aggregate;
@@ -209,25 +235,50 @@ public class Simulator implements Runnable {
 				
 				double muZ_Mean = sumMuZ/param.aggregate;
 				double muZ_Var = (sumMuZ_Sq - muZ_Mean * muZ_Mean)/param.aggregate;
+
+				double cX_Mean = sumCX/param.aggregate;
+				double cX_Var = (sumCX_Sq - cX_Mean * cX_Mean)/param.aggregate;
+
+				double cY_Mean = sumCY/param.aggregate;
+				double cY_Var = (sumCY_Sq - cY_Mean * cY_Mean)/param.aggregate;
 				
-				out.print(String.format("%1.8e", energy_Mean));
+				double cZ_Mean = sumCZ/param.aggregate;
+				double cZ_Var = (sumCZ_Sq - cZ_Mean * cZ_Mean)/param.aggregate;
+				
+				
+				out.print(String.format(PREC, energy_Mean));
 				out.print(", ");
-				out.print(String.format("%1.8e", energy_Var));
+				out.print(String.format(PREC, energy_Var));
 				out.print(", ");
 				
-				out.print(String.format("%1.8e", muX_Mean));
+				out.print(String.format(PREC, muX_Mean));
 				out.print(", ");
-				out.print(String.format("%1.8e", muX_Var));
-				out.print(", ");
-				
-				out.print(String.format("%1.8e", muY_Mean));
-				out.print(", ");
-				out.print(String.format("%1.8e", muY_Var));
+				out.print(String.format(PREC, muX_Var));
 				out.print(", ");
 				
-				out.print(String.format("%1.8e", muZ_Mean));
+				out.print(String.format(PREC, muY_Mean));
 				out.print(", ");
-				out.print(String.format("%1.8e", muZ_Var));
+				out.print(String.format(PREC, muY_Var));
+				out.print(", ");
+
+				out.print(String.format(PREC, muZ_Mean));
+				out.print(", ");
+				out.print(String.format(PREC, muZ_Var));
+				out.print(", ");
+				
+				out.print(String.format(PREC, cX_Mean));
+				out.print(", ");
+				out.print(String.format(PREC, cX_Var));
+				out.print(", ");
+
+				out.print(String.format(PREC, cY_Mean));
+				out.print(", ");
+				out.print(String.format(PREC, cY_Var));
+				out.print(", ");
+				
+				out.print(String.format(PREC, cZ_Mean));
+				out.print(", ");
+				out.print(String.format(PREC, cZ_Var));
 //				out.print(", ");
 				
 				out.println();
@@ -305,7 +356,7 @@ public class Simulator implements Runnable {
 		double E = 0;
 		MyVector S = getSpin(indexA);
 		Element atomA = getAtom(indexA);
-		
+
 		int[][][] allNeighbours = crys.getNNIndices();
 		for (int nJ = 0; nJ < allNeighbours.length; nJ++) {
 			int[][] nb_with_specific_J = allNeighbours[nJ];
@@ -321,15 +372,14 @@ public class Simulator implements Runnable {
 	}
 
 	private double calcFieldEnergy(int[] index) {
-		double E = 0;
-		MyVector S = getSpin(index);
-		E = -S.dot(param.H) * getAtom(index).spin;
+		MyVector S = getSpin(index).mult(getAtom(index).spin); //Spin vector S
+		double E = -S.dot(param.H);
 		return E;
 	}
 	
 	private double calcAniEnergy(int[] index) {
 		double E = 0;
-		MyVector S = getSpin(index);
+		MyVector S = getSpin(index); //Spin vector S, may require .mult(getAtom(index).spin)
 		E += getAtom(index).Dx * S.x * S.x;
 		E += getAtom(index).Dy * S.y * S.y;
 		E += getAtom(index).Dz * S.z * S.z;
@@ -487,9 +537,8 @@ public class Simulator implements Runnable {
 				proj += getSpin(index).dot(basisState[i]);
 			}
 		}
-		return proj;
-	}	
-	
+		return proj / nAtoms;
+	}		
 	
 	/** Generates and sets spin-configuration */
 	private void newConfig() {
@@ -500,7 +549,25 @@ public class Simulator implements Runnable {
 			setAtom(index, Element.Ni);	
 		}
 	}
-
+	
+	public void setElementFraction(Element el, double frac) {
+		while ( getFraction(el) < frac) {
+			int[] index = chooseRandomAtom(rand);
+			setAtom(index, el);
+		}
+	}
+	
+	public double getFraction(Element el) {
+		int count = 0;
+		Iterator<int[]> it = iterateAtoms();
+		while (it.hasNext()) {
+			int[] index = (int[]) it.next();
+			if(getAtom(index) == el) {
+				count++;
+			}
+		}
+		return (double) count/(double) nAtoms;
+	}
 
 	public void configFromBasisState(MyVector[] basisState) {
 		Iterator<int[]> it = iterateUnitCells();
