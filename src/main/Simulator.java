@@ -25,7 +25,9 @@ public class Simulator implements Runnable {
 	public static final float c = 4.68f;
 	public static final float scaling = 1;
 
-	private static final double invBoltz = 11.6045f; // inverse of the Boltzmann constant in units K / meV
+	private static final double invBoltz = 11.6045; // inverse of the Boltzmann constant in units K / meV
+	private static final double muB = 0.05788381751; // mu_B the Bohr_magneton in units meV/T
+	private static final double g = 2; // the gyromagnetic factor of the electron
 	public Crystal crys = Crystal.FCC;
 	public MyVector[] basis = crys.get();
 	public int nBasis = basis.length; 
@@ -71,7 +73,7 @@ public class Simulator implements Runnable {
 	
 	private static final String defaultDir = "C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data\\";
 	
-	private double delta = 0.5;
+	private double delta = 0.3;
 	public int nRejects = 0;
 	private double sumCZ;
 	private double sumCZ_Sq;
@@ -224,67 +226,7 @@ public class Simulator implements Runnable {
 			sumCZ_Sq += cZ*cZ;
 			
 			if (param.printFullArray && progress % param.aggregate == 0) {
-				double energy_Mean = sumEnergy/param.aggregate;
-				double energy_Var = (sumEnergySq - energy_Mean * energy_Mean)/param.aggregate;
-				
-				double muX_Mean = sumMuX/param.aggregate;
-				double muX_Var = (sumMuX_Sq - muX_Mean * muX_Mean)/param.aggregate;
-				
-				double muY_Mean = sumMuY/param.aggregate;
-				double muY_Var = (sumMuY_Sq - muY_Mean * muY_Mean)/param.aggregate;
-				
-				double muZ_Mean = sumMuZ/param.aggregate;
-				double muZ_Var = (sumMuZ_Sq - muZ_Mean * muZ_Mean)/param.aggregate;
-
-				double cX_Mean = sumCX/param.aggregate;
-				double cX_Var = (sumCX_Sq - cX_Mean * cX_Mean)/param.aggregate;
-
-				double cY_Mean = sumCY/param.aggregate;
-				double cY_Var = (sumCY_Sq - cY_Mean * cY_Mean)/param.aggregate;
-				
-				double cZ_Mean = sumCZ/param.aggregate;
-				double cZ_Var = (sumCZ_Sq - cZ_Mean * cZ_Mean)/param.aggregate;
-				
-				
-				out.print(String.format(PREC, energy_Mean));
-				out.print(", ");
-				out.print(String.format(PREC, energy_Var));
-				out.print(", ");
-				
-				out.print(String.format(PREC, muX_Mean));
-				out.print(", ");
-				out.print(String.format(PREC, muX_Var));
-				out.print(", ");
-				
-				out.print(String.format(PREC, muY_Mean));
-				out.print(", ");
-				out.print(String.format(PREC, muY_Var));
-				out.print(", ");
-
-				out.print(String.format(PREC, muZ_Mean));
-				out.print(", ");
-				out.print(String.format(PREC, muZ_Var));
-				out.print(", ");
-				
-				out.print(String.format(PREC, cX_Mean));
-				out.print(", ");
-				out.print(String.format(PREC, cX_Var));
-				out.print(", ");
-
-				out.print(String.format(PREC, cY_Mean));
-				out.print(", ");
-				out.print(String.format(PREC, cY_Var));
-				out.print(", ");
-				
-				out.print(String.format(PREC, cZ_Mean));
-				out.print(", ");
-				out.print(String.format(PREC, cZ_Var));
-//				out.print(", ");
-				
-				out.println();
-				
-				sumEnergy = 0;
-				sumEnergySq = 0;
+				flush(out);
 			}
 		}
 		if (!param.printFullArray) {
@@ -300,6 +242,80 @@ public class Simulator implements Runnable {
 			out.print(meanY + ", ");
 			out.println(meanZ);
 		}
+	}
+
+	private void flush(PrintStream out) {
+		double energy_Mean = sumEnergy/param.aggregate;
+		double energy_Var = (sumEnergySq - energy_Mean * energy_Mean)/param.aggregate;
+		
+		double muX_Mean = sumMuX/param.aggregate;
+		double muX_Var = (sumMuX_Sq - muX_Mean * muX_Mean)/param.aggregate;
+		
+		double muY_Mean = sumMuY/param.aggregate;
+		double muY_Var = (sumMuY_Sq - muY_Mean * muY_Mean)/param.aggregate;
+		
+		double muZ_Mean = sumMuZ/param.aggregate;
+		double muZ_Var = (sumMuZ_Sq - muZ_Mean * muZ_Mean)/param.aggregate;
+
+		double cX_Mean = sumCX/param.aggregate;
+		double cX_Var = (sumCX_Sq - cX_Mean * cX_Mean)/param.aggregate;
+
+		double cY_Mean = sumCY/param.aggregate;
+		double cY_Var = (sumCY_Sq - cY_Mean * cY_Mean)/param.aggregate;
+		
+		double cZ_Mean = sumCZ/param.aggregate;
+		double cZ_Var = (sumCZ_Sq - cZ_Mean * cZ_Mean)/param.aggregate;
+		
+		out.print(String.format(PREC, energy_Mean));
+		out.print(", ");
+		out.print(String.format(PREC, energy_Var));
+		out.print(", ");
+		
+		out.print(String.format(PREC, muX_Mean));
+		out.print(", ");
+		out.print(String.format(PREC, muX_Var));
+		out.print(", ");
+		
+		out.print(String.format(PREC, muY_Mean));
+		out.print(", ");
+		out.print(String.format(PREC, muY_Var));
+		out.print(", ");
+
+		out.print(String.format(PREC, muZ_Mean));
+		out.print(", ");
+		out.print(String.format(PREC, muZ_Var));
+		out.print(", ");
+		
+		out.print(String.format(PREC, cX_Mean));
+		out.print(", ");
+		out.print(String.format(PREC, cX_Var));
+		out.print(", ");
+
+		out.print(String.format(PREC, cY_Mean));
+		out.print(", ");
+		out.print(String.format(PREC, cY_Var));
+		out.print(", ");
+		
+		out.print(String.format(PREC, cZ_Mean));
+		out.print(", ");
+		out.print(String.format(PREC, cZ_Var));
+//				out.print(", ");
+		out.println();
+		
+		sumEnergy = 0;
+		sumEnergySq = 0;
+		sumCX = 0;
+		sumCX_Sq = 0;
+		sumCY = 0;
+		sumCY_Sq = 0;
+		sumCZ = 0;
+		sumCZ_Sq = 0;
+		sumMuX = 0;
+		sumMuX_Sq = 0;
+		sumMuY = 0;
+		sumMuY_Sq = 0;
+		sumMuZ = 0;
+		sumMuZ_Sq = 0;
 	}
 
 	private double iterateRandomSingle(double temp) {
@@ -373,7 +389,7 @@ public class Simulator implements Runnable {
 
 	private double calcFieldEnergy(int[] index) {
 		MyVector S = getSpin(index).mult(getAtom(index).spin); //Spin vector S
-		double E = -S.dot(param.H);
+		double E = -g * muB * S.dot(param.H);
 		return E;
 	}
 	
@@ -537,7 +553,7 @@ public class Simulator implements Runnable {
 				proj += getSpin(index).dot(basisState[i]);
 			}
 		}
-		return proj / nAtoms;
+		return proj / (double) nAtoms;
 	}		
 	
 	/** Generates and sets spin-configuration */
