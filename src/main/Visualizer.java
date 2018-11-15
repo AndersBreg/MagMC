@@ -143,10 +143,13 @@ public class Visualizer extends PApplet {
 			noStroke();
 			switch (master.getAtom(ls)) {
 			case Ni:
-				fill(color(0, 0, 255));
+				fill(color(0xa5, 0x2a, 0x2a));
 				break;
 			case Co:
-				fill(color(0, 255, 0));
+				fill(color(0xff, 0x14, 0x93));
+				break;
+			case Fe:
+				fill(color(0xdd, 0x77, 0x00));
 				break;
 			default:
 				fill(color(0, 0, 0));

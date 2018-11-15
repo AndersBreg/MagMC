@@ -1,14 +1,4 @@
 /MonteCarloQuadratic.class
-/core.jar
-/gluegen-rt-natives-windows-amd64.jar
-/gluegen-rt-natives-windows-i586.jar
-/gluegen-rt.jar
-/jogl-all-natives-windows-amd64.jar
-/jogl-all-natives-windows-i586.jar
-/jogl-all.jar
-/main.class
-/main/
-/test/
 /constants/
+/main/
 /simulationRunner.class
-/RecyclingBin.class
