@@ -207,7 +207,7 @@ public class Visualizer extends PApplet {
 		}
 		text("Energy = " + master.energySingle/master.nAtoms, 50, cursorPosY);
 		cursorPosY += 20;
-		text("Current step = " + master.progress, 50, cursorPosY);
+		text("Current step = " + master.step, 50, cursorPosY);
 		cam.endHUD();
 	}
 
