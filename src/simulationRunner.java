@@ -1,5 +1,6 @@
 
 import java.io.*;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -12,22 +13,22 @@ import constants.Element;
 
 public class simulationRunner {
 	
-	private static double tStart = 1.7;
-	private static double hStart = 10;
+	private static double tStart = 1;
+	private static double hStart = 0;
 
-	private static double dT = 14;
-	private static double dH = 0.2;
+	private static double dT = 1;
+	private static double dH = 2;
 
-	private static double tEnd = 4; // In kelvin
-	private static double hEnd = 14; // In tesla
+	private static double tEnd = 30; // In kelvin
+	private static double hEnd = 0.1; // In tesla
 
 	private static int tArrSize = (int) Math.ceil((tEnd - tStart) / dT);// Numbers of temperatures to simulate
 	private static int hArrSize = (int) Math.ceil((hEnd - hStart) / dH);// Numbers of fields to simulate
 
 	private static double[][] T_H_Arr;
 
-	private static String location = "C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data\\LiNiPO4_phase_transition\\";
-	private static String name = "Co_sim";
+	private static String location = "C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data\\Wei_Tian_Simul_corrected_2\\";
+	private static String name = "Sim";
 	private static String configFilename = "config";
 	private static File logFile = new File("C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data\\logFile.txt");
 	
@@ -35,9 +36,9 @@ public class simulationRunner {
 	private static boolean loadConfig = false;
 	private static int N = tArrSize * hArrSize; // Total numbers of simulations;
 
-	static Visualizer vis;
-	static Simulator[] sim;
-	static Thread[] threads;
+	private static Visualizer vis;
+	private static Simulator[] sim;
+	private static Thread[] threads;
 	private static boolean parallel = true;
 
 	public static void main(String[] args) throws InterruptedException, IOException {
@@ -53,11 +54,6 @@ public class simulationRunner {
 
 		Parameters[] paramRange = new Parameters[N]; // Array of all parameters to use
 
-		// Coupling values: Anisotropy:
-		// [Ja, Jb, Jc, Jab, Jac, Jbc] [ Da, Db, Dc ]
-		// [ 0, 0.67, -.05, 0.3, -.11, 1.04] Pure Ni [ 0.339, 1.82, 0 ]
-		// [ -, -, -, -, -, -] Pure Co []
-
 		for (int i = 0; i < N; i++) {
 			String filename = name + String.format("_T=%1.2f_Hb=%1.2f", T_H_Arr[i][0], T_H_Arr[i][1]); 
 					/*String.format("_(%d,%d,%d)_T=%1.2f_H=%1.2f.txt", 
@@ -66,9 +62,9 @@ public class simulationRunner {
 					paramRange[i].nZ/2, 
 					paramRange[i].temp,
 					paramRange[i].H.z);*/ // TODO required re-writing the simulator constructor.
-			paramRange[i] = new Parameters(new int[] { 2 << 18, 3, 3, 3 },
-					new double[] { T_H_Arr[i][0], 0, 0, T_H_Arr[i][1]},
-					new boolean[] { true },
+			paramRange[i] = new Parameters(
+					new int[] { 2 << 14, 2 << 8, 2, 2, 2 },
+					new double[] { T_H_Arr[i][0], 0, T_H_Arr[i][1], 0},
 					new String[] {
 						location, 
 						filename,
@@ -94,13 +90,13 @@ public class simulationRunner {
 				} else {
 					sim[i] = new Simulator(paramRange[i]);
 				}
-				sim[i].setElementFraction(Element.Ni, 0.999);
-				sim[i].configFromBasisState(Crystal.Cz); // Forces a basis state onto the state
+				sim[i].setElementFraction(Element.Ni, 1.0);
+//				sim[i].configFromBasisState(Crystal.Cz); // Forces a basis configuration onto the state
 				threads[i] = new Thread(sim[i]);
 				threads[i].start();
 			}
 			// Visualizing:
-			int vIndex = 0;
+			int vIndex = 2;
 			vis = new Visualizer(sim[vIndex]);
 			String[] myArgs = { "test.Visualizer" };
 			PApplet.runSketch(myArgs, vis);
@@ -109,7 +105,7 @@ public class simulationRunner {
 			waitMessage(startTime, 0);
 			for (int i = 0; i < N; i++) {
 				threads[i].join();
-				writeToLogFile(sim[i]);
+				writeToLogFile(sim[i], Long.toString(System.currentTimeMillis() - startTime));
 				if (saveConfig) {
 					String configFile = location + name
 							+ String.format("_config_(%d,%d,%d)_T=%1.2f_Hb=%1.2f.txt", 
@@ -128,7 +124,7 @@ public class simulationRunner {
 				threads[i].start();
 				waitMessage(startTime, i);
 				threads[i].join();
-				writeToLogFile(sim[i]);
+				writeToLogFile(sim[i], formatTime(System.currentTimeMillis() - startTime));
 				sim[i].saveConfig(configFile);
 				if(i+1 != sim.length) {
 					sim[i+1].loadConfig(configFile);
@@ -136,7 +132,7 @@ public class simulationRunner {
 			}
 		}
 
-		System.out.println("Total time taken: " + (System.currentTimeMillis() - startTime) + " ms");
+		System.out.println("Total time taken: " + formatTime(System.currentTimeMillis() - startTime) + " ms");
 		System.exit(0);
 	}
 
@@ -146,25 +142,28 @@ public class simulationRunner {
 
 	private static void waitMessage(long startTime, int i) throws InterruptedException {
 		while (threads[i].isAlive()) {
-			double progress = sim[i].progress / (double) sim[i].param.nSteps;
-			System.out.print("Simulation progress: " + progress);
+			double progress = sim[i].step / (double) sim[i].param.nSteps;
+			System.out.format("Simulation progress: %1.4f", progress);
 			long elapsed = System.currentTimeMillis() - startTime;
 			long ETA = (long) (elapsed * (1 / progress - 1));
 
-			String ETAString = String.format("%d min, %d sec", TimeUnit.MILLISECONDS.toMinutes(ETA),
-					TimeUnit.MILLISECONDS.toSeconds(ETA)
-							- TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(ETA)));
-			System.out.println(", estimated finish time: " + ETAString);
+			System.out.println(", estimated finish time: " + formatTime(ETA));
 			Thread.sleep(1000);
 		}
 	}
+
+	private static String formatTime(long ETA) {
+		return String.format("%d min, %d sec", TimeUnit.MILLISECONDS.toMinutes(ETA),
+				TimeUnit.MILLISECONDS.toSeconds(ETA)
+						- TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(ETA)));
+	}
 	
-	private static void writeToLogFile(Simulator sim) {
+	private static void writeToLogFile(Simulator sim, String timeTaken) {
 		System.out.println("Prints additional data to path: " + logFile.getAbsolutePath());
 		try {
 			FileWriter writer = new FileWriter(logFile, true);
-			writer.write("File:" + sim.outputFile.getName() + " has ratio of rejected samples "
-					+ ((double) sim.nRejects / (double) sim.param.nSteps) + "\n");
+			writer.write("File:" + sim.outputFile.getName() + " has rejection ratio "
+					+ ((double) sim.nRejects / (double) sim.param.nSteps) + " and time taken " + timeTaken +"\n");
 			writer.close();
 		} catch (IOException e) {
 			System.err.println("Caught Exception: " + e.getMessage());
