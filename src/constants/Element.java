@@ -51,11 +51,9 @@ public enum Element {
 	}
 
 	public String toString() {
-		String s = "[";
-		for (int i = 0; i < Jlist.length; i++) {
-			s = s + Jlist[i]+", ";
-		}
-		s += "], ["+Dx+", "+Dy+", "+Dz+"]";
+		String s = "";
+		s += "[ " + Ja + ", " + Jb + ", " + Jc + ", " + Jbc + ", " + Jac + ", " + Jab + "], ";
+		s += "[" + Dx + ", " + Dy + ", " + Dz + "]";
 		return s;
 	}
 	

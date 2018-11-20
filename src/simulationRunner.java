@@ -6,35 +6,34 @@ import java.util.concurrent.TimeUnit;
 
 import main.*;
 import processing.core.PApplet;
-import javax.swing.*;
 
 import constants.Crystal;
 import constants.Element;
 
 public class simulationRunner {
 	
-	private static double tStart = 1;
-	private static double hStart = 0;
+	private static double xStart = 2;
+	private static double yStart = 0;
 
-	private static double dT = 1;
-	private static double dH = 2;
+	private static double dX = 49;
+	private static double dY = 1;
 
-	private static double tEnd = 30; // In kelvin
-	private static double hEnd = 0.1; // In tesla
+	private static double xEnd = 3; // In kelvin
+	private static double yEnd = 100; // In tesla
 
-	private static int tArrSize = (int) Math.ceil((tEnd - tStart) / dT);// Numbers of temperatures to simulate
-	private static int hArrSize = (int) Math.ceil((hEnd - hStart) / dH);// Numbers of fields to simulate
+	private static int xArrSize = (int) Math.ceil((xEnd - xStart) / dX);// Numbers of temperatures to simulate
+	private static int yArrSize = (int) Math.ceil((yEnd - yStart) / dY);// Numbers of fields to simulate
 
-	private static double[][] T_H_Arr;
+	private static double[][] X_Y_Arr;
 
-	private static String location = "C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data\\Wei_Tian_Simul_corrected_2\\";
+	private static String location = "C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data\\Ni_c-axis_mag_2\\";
 	private static String name = "Sim";
 	private static String configFilename = "config";
 	private static File logFile = new File("C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data\\logFile.txt");
 	
 	private static boolean saveConfig = false;
 	private static boolean loadConfig = false;
-	private static int N = tArrSize * hArrSize; // Total numbers of simulations;
+	private static int N = xArrSize * yArrSize; // Total numbers of simulations;
 
 	private static Visualizer vis;
 	private static Simulator[] sim;
@@ -42,20 +41,21 @@ public class simulationRunner {
 	private static boolean parallel = true;
 
 	public static void main(String[] args) throws InterruptedException, IOException {
-
+//		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+		
 		System.out.println(N);
-		T_H_Arr = new double[N][2];
-		for (int nt = 0; nt < tArrSize; nt++) {
-			for (int nh = 0; nh < hArrSize; nh++) {
-				T_H_Arr[getIndex(nh, nt)][0] = tStart + dT * nt;
-				T_H_Arr[getIndex(nh, nt)][1] = hStart + dH * nh;
+		X_Y_Arr = new double[N][2];
+		for (int nt = 0; nt < xArrSize; nt++) {
+			for (int nh = 0; nh < yArrSize; nh++) {
+				X_Y_Arr[getIndex(nh, nt)][0] = xStart + dX * nt;
+				X_Y_Arr[getIndex(nh, nt)][1] = yStart + dY * nh;
 			}
 		}
 
 		Parameters[] paramRange = new Parameters[N]; // Array of all parameters to use
 
 		for (int i = 0; i < N; i++) {
-			String filename = name + String.format("_T=%1.2f_Hb=%1.2f", T_H_Arr[i][0], T_H_Arr[i][1]); 
+			String filename = name + String.format("_T=%1.2f_Hb=%1.2f", X_Y_Arr[i][0], X_Y_Arr[i][1]); 
 					/*String.format("_(%d,%d,%d)_T=%1.2f_H=%1.2f.txt", 
 					paramRange[i].nX/2, 
 					paramRange[i].nY/2, 
@@ -63,8 +63,8 @@ public class simulationRunner {
 					paramRange[i].temp,
 					paramRange[i].H.z);*/ // TODO required re-writing the simulator constructor.
 			paramRange[i] = new Parameters(
-					new int[] { 2 << 14, 2 << 8, 2, 2, 2 },
-					new double[] { T_H_Arr[i][0], 0, T_H_Arr[i][1], 0},
+					new int[] { 1 << 18, 1 << 8, 4, 4, 4 },
+					new double[] { X_Y_Arr[i][0], 0, 0, X_Y_Arr[i][1]},
 					new String[] {
 						location, 
 						filename,
@@ -132,12 +132,12 @@ public class simulationRunner {
 			}
 		}
 
-		System.out.println("Total time taken: " + formatTime(System.currentTimeMillis() - startTime) + " ms");
+		System.out.println("Total time taken: " + formatTime(System.currentTimeMillis() - startTime));
 		System.exit(0);
 	}
 
 	private static int getIndex(int nh, int nt) {
-		return nh + hArrSize * nt;
+		return nh + yArrSize * nt;
 	}
 
 	private static void waitMessage(long startTime, int i) throws InterruptedException {

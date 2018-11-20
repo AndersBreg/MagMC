@@ -118,7 +118,6 @@ public class Parameters {
 		this.initial = newConfig;
 	}
 	
-
 	public static Parameters loadParameters(String dir, String filename) throws IOException {
 		File file = Paths.get(dir, filename + ".txt").toFile();
 		BufferedReader in = new BufferedReader(new FileReader(file));

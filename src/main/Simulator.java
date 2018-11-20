@@ -151,7 +151,7 @@ public class Simulator implements Runnable {
 			positions[index[0]][index[1]][index[2]] = position.sub(mid).mult(scaling);
 		}
 		
-		delta = 0.4; //  0.01 / (1 - Math.exp(param.temp - 12)) 
+		delta = 0.4;// + 0.6 * Math.tanh(param.temp - 12); 
 	}
 
 	@Override
@@ -176,11 +176,10 @@ public class Simulator implements Runnable {
 			}
 			out.print(getFraction(Element.Ni) + ", ");
 			out.print(getFraction(Element.Co) + ", ");
-			out.print(getFraction(Element.Fe) + ", ");
-			out.print("Ni param: " + Element.Ni.toString());
-			out.print("Co param: " + Element.Co.toString());
-			out.print("Fe param: " + Element.Fe.toString());
-			out.println();
+			out.println(getFraction(Element.Fe) + ", ");
+			out.println("Ni param: " + Element.Ni.toString());
+			out.println("Co param: " + Element.Co.toString());
+			out.println("Fe param: " + Element.Fe.toString());
 			out.println("Output: ");
 			out.println("energy, en. var, "
 					+ "FX, FX var, FY, FY var, FZ, FZ var, "
