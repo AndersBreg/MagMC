@@ -1,6 +1,7 @@
 package main;
 
 import java.io.*;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -40,8 +41,7 @@ public class Simulator implements Runnable {
 	public int step = 0;
 
 	/**
-	 * Parameter values: Temperature, #steps, nX, nY, nZ, Ja, Jb, Jc, Jbc, Jac, Jbc,
-	 * Da, Db, Dc, Hx, Hy, Hz
+	 * Parameter values: Temperature, #steps, nX, nY, Hx, Hy, Hz
 	 */
 	public Parameters param;
 
@@ -80,7 +80,6 @@ public class Simulator implements Runnable {
 	private Random rand;
 	
 	private MyVector mid;
-	private String filename;
 	public File outputFile;
 	
 	private static final String defaultDir = "C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data\\";
@@ -88,66 +87,46 @@ public class Simulator implements Runnable {
 	private double delta;
 	public int nRejects = 0;
 	/**
-	 * Parameter values: #steps, nX, nY, nZ, Temperature, Ja, Jb, Jc, Jbc, Jac, Jbc,
-	 * Da, Db, Dc, Hx, Hy, Hz
+	 * Parameter values: #steps, nX, nY, nZ, Temperature, Hx, Hy, Hz
+	 * @throws FileAlreadyExistsException 
 	 */
-	public Simulator(Parameters newParam) { // TODO Re-write constructor to accept a filename.
+	public Simulator(Parameters newParam, File file) throws FileAlreadyExistsException { 
 		this.param = newParam;
 		setup();
-		
-		if (param.filename.equals("")) {
-			filename = String.format("Test_T=%1.2f.txt", param.temp);
-			System.out.println("No filename given, output file set to " + filename);
-			outputFile = Paths.get(param.dir, filename).toFile();
-		} else {
-			outputFile = Paths.get(param.dir, param.filename + param.extension).toFile();
-			for (int i = 0; i < 10; i++) {
-				if (outputFile.exists()) {
-					outputFile = Paths.get(param.dir, param.filename + "_" + i + param.extension).toFile();
-				}
-			}
-		}
+		outputFile = file;
 		System.out.println("No configuration specified, generates new.");
 		newConfig();
 	}
 	
-	 // TODO Re-write constructor to accept a filename.
-	public Simulator(Parameters newParam, String configFile) throws IOException {
+	public Simulator(Parameters newParam, File file, File configFile) throws IOException {
 		this.param = newParam;
 		setup();
-		
-		if (param.filename.equals("")) {
-			filename = String.format("Test_T=%1.2f.txt", param.temp);
-			System.out.println("No filename given, output file set to " + filename);
-			outputFile = Paths.get(param.dir, filename).toFile();
-		} else {
-			outputFile = Paths.get(param.dir, param.filename + param.extension).toFile();
-			for (int i = 0; i < 10; i++) {
-				if (outputFile.exists()) {
-					outputFile = Paths.get(param.dir, param.filename + "_" + i + param.extension).toFile();
-				}
-			}
-		}
+		outputFile = file;
 		loadConfig(configFile);
 	}
 	
+	public Simulator() {
+		this.param = new Parameters();
+		setup();
+	}
+	
 	public void setup() {
-		nAtoms = param.nX * param.nY * param.nZ * nBasis / 8;
+		nAtoms = param.nX * param.nY * param.nZ * nBasis;
 
-		positions = new MyVector[param.nX][param.nY][param.nZ];
-		atomType = new Element[param.nX][param.nY][param.nZ];
-		spins = new MyVector[param.nX][param.nY][param.nZ];
+		positions = new MyVector[2*param.nX][2*param.nY][2*param.nZ];
+		atomType = new Element[2*param.nX][2*param.nY][2*param.nZ];
+		spins = new MyVector[2*param.nX][2*param.nY][2*param.nZ];
 
 		rand = new Random();
 
-		mid = new MyVector(param.nX * 0.25, param.nY * 0.25, param.nZ * 0.25);
+		mid = new MyVector(param.nX * .5, param.nY * .5, param.nZ * .5);
 		mid = scaleVec(a, b, c, mid);
 		Iterator<int[]> it = iterateAtoms();
 		while (it.hasNext()) {
 			int[] index = it.next();
 			index = normIndex(index);
 			MyVector position = new MyVector(index[0], index[1], index[2]);
-			position = scaleVec(a/2, b/2, c/2, position);
+			position = scaleVec(a / 2, b / 2, c / 2, position);
 			positions[index[0]][index[1]][index[2]] = position.sub(mid).mult(scaling);
 		}
 		
@@ -160,9 +139,9 @@ public class Simulator implements Runnable {
 		Path path = outputFile.toPath();
 
 		outputFile = path.toAbsolutePath().toFile();
-		System.out.println("Prints data to path: " + outputFile.getAbsolutePath());
 
 		try {
+			System.out.println("Prints data to path: " + outputFile.getCanonicalPath() );
 			PrintStream out = new PrintStream(outputFile);
 			String[] names = Parameters.getNames();
 			for (int i = 0; i < names.length; i++) {
@@ -184,7 +163,7 @@ public class Simulator implements Runnable {
 			out.println("energy, en. var, "
 					+ "FX, FX var, FY, FY var, FZ, FZ var, "
 					+ "Cx, Cx var, Cy, Cy var, Cz, Cz var, "
-					+ "Gx, Gx var, Gy, Gy var, Gz, Gz var"
+					+ "Gx, Gx var, Gy, Gy var, Gz, Gz var, "
 					+ "Ax, Ax var, Ay, Ay var, Az, Az var");
 			simulate(out);
 
@@ -211,21 +190,21 @@ public class Simulator implements Runnable {
 			}
 			
 			double energyPrAtom = energySingle/nAtoms; 
-			double fX = productWithBasisState(Crystal.Fx); // Alternative use calcMagnetization(0);
-			double fY = productWithBasisState(Crystal.Fy);
-			double fZ = productWithBasisState(Crystal.Fz);
+			double fX = projBasisStateTotal(Crystal.Fx); // Alternative use calcMagnetization(0);
+			double fY = projBasisStateTotal(Crystal.Fy);
+			double fZ = projBasisStateTotal(Crystal.Fz);
 			
-			double cX = productWithBasisState(Crystal.Cx);
-			double cY = productWithBasisState(Crystal.Cy);
-			double cZ = productWithBasisState(Crystal.Cz);
+			double cX = projBasisStateTotal(Crystal.Cx);
+			double cY = projBasisStateTotal(Crystal.Cy);
+			double cZ = projBasisStateTotal(Crystal.Cz);
 			
-			double aX = productWithBasisState(Crystal.Ax);
-			double aY = productWithBasisState(Crystal.Ay);
-			double aZ = productWithBasisState(Crystal.Az);
+			double aX = projBasisStateTotal(Crystal.Ax);
+			double aY = projBasisStateTotal(Crystal.Ay);
+			double aZ = projBasisStateTotal(Crystal.Az);
 			
-			double gX = productWithBasisState(Crystal.Gx);
-			double gY = productWithBasisState(Crystal.Gy);
-			double gZ = productWithBasisState(Crystal.Gz);
+			double gX = projBasisStateTotal(Crystal.Gx);
+			double gY = projBasisStateTotal(Crystal.Gy);
+			double gZ = projBasisStateTotal(Crystal.Gz);
 			
 			sumEnergy += energyPrAtom;
 			sumEnergySq += energyPrAtom * energyPrAtom;
@@ -271,41 +250,37 @@ public class Simulator implements Runnable {
 	private void flush(PrintStream out) {
 		double energy_Mean = sumEnergy/param.aggregate;
 		double energy_Var = (sumEnergySq - energy_Mean * energy_Mean)/param.aggregate;
-		
-		double fX_Mean = sumFX/param.aggregate;
-		double fX_Var = (sumFX_Sq - fX_Mean * fX_Mean)/param.aggregate;
-		
-		double fY_Mean = sumFY/param.aggregate;
-		double fY_Var = (sumFY_Sq - fY_Mean * fY_Mean)/param.aggregate;
-		
-		double fZ_Mean = sumFZ/param.aggregate;
-		double fZ_Var = (sumFZ_Sq - fZ_Mean * fZ_Mean)/param.aggregate;
 
-		double cX_Mean = sumCX/param.aggregate;
+		double fX_Mean = sumFX / (double) nAtoms / (double) param.aggregate;
+		double fY_Mean = sumFY / (double) nAtoms / (double) param.aggregate;
+		double fZ_Mean = sumFZ / (double) nAtoms / (double) param.aggregate;
+
+		double fX_Var = (sumFX_Sq / (double) param.aggregate - fX_Mean * fX_Mean);
+		double fY_Var = (sumFY_Sq / (double) param.aggregate - fY_Mean * fY_Mean);
+		double fZ_Var = (sumFZ_Sq / (double) param.aggregate - fZ_Mean * fZ_Mean);
+
+		double cX_Mean = sumCX / (double) nAtoms / (double) param.aggregate;
+		double cY_Mean = sumCY / (double) nAtoms / (double) param.aggregate;
+		double cZ_Mean = sumCZ / (double) nAtoms / (double) param.aggregate;
+		
 		double cX_Var = (sumCX_Sq - cX_Mean * cX_Mean)/param.aggregate;
-
-		double cY_Mean = sumCY/param.aggregate;
 		double cY_Var = (sumCY_Sq - cY_Mean * cY_Mean)/param.aggregate;
-		
-		double cZ_Mean = sumCZ/param.aggregate;
 		double cZ_Var = (sumCZ_Sq - cZ_Mean * cZ_Mean)/param.aggregate;
 		
-		double gX_Mean = sumGX/param.aggregate;
-		double gX_Var = (sumGX_Sq - gX_Mean * gX_Mean)/param.aggregate;
-
-		double gY_Mean = sumGY/param.aggregate;
-		double gY_Var = (sumGY_Sq - gY_Mean * gY_Mean)/param.aggregate;
+		double gX_Mean = sumGX / (double) nAtoms / (double) param.aggregate;
+		double gY_Mean = sumGY / (double) nAtoms / (double) param.aggregate;
+		double gZ_Mean = sumGZ / (double) nAtoms / (double) param.aggregate;
 		
-		double gZ_Mean = sumGZ/param.aggregate;
+		double gX_Var = (sumGX_Sq - gX_Mean * gX_Mean)/param.aggregate;
+		double gY_Var = (sumGY_Sq - gY_Mean * gY_Mean)/param.aggregate;
 		double gZ_Var = (sumGZ_Sq - gZ_Mean * gZ_Mean)/param.aggregate;
 		
-		double aX_Mean = sumAX/param.aggregate;
-		double aX_Var = (sumAX_Sq - aX_Mean * aX_Mean)/param.aggregate;
-
-		double aY_Mean = sumAY/param.aggregate;
-		double aY_Var = (sumAY_Sq - aY_Mean * aY_Mean)/param.aggregate;
+		double aX_Mean = sumAX / (double) nAtoms / (double) param.aggregate;
+		double aY_Mean = sumAY / (double) nAtoms / (double) param.aggregate;
+		double aZ_Mean = sumAZ / (double) nAtoms / (double) param.aggregate;
 		
-		double aZ_Mean = sumAZ/param.aggregate;
+		double aX_Var = (sumAX_Sq - aX_Mean * aX_Mean)/param.aggregate;
+		double aY_Var = (sumAY_Sq - aY_Mean * aY_Mean)/param.aggregate;
 		double aZ_Var = (sumAZ_Sq - aZ_Mean * aZ_Mean)/param.aggregate;
 		
 		out.print(String.format(PREC, energy_Mean));
@@ -405,6 +380,7 @@ public class Simulator implements Runnable {
 
 	private double iterateRandomSingle(double temp) {
 		int[] index = chooseRandomAtom(rand);
+		
 		MyVector old = getSpin(index).copy();
 
 		// Before change
@@ -541,9 +517,9 @@ public class Simulator implements Runnable {
 	}
 
 	private int[] chooseRandomAtom(Random rand) {
-		int X = rand.nextInt(param.nX); 
-		int Y = rand.nextInt(param.nY);
-		int W = rand.nextInt(param.nZ/2);
+		int X = rand.nextInt(2*param.nX); 
+		int Y = rand.nextInt(2*param.nY);
+		int W = rand.nextInt(param.nZ);
 		int Z;
 		if ( (X+Y) % 2 == 0) {
 			Z = 2*W;
@@ -556,16 +532,16 @@ public class Simulator implements Runnable {
 
 	public int[] normIndex(int[] ind) {
 		return new int[] { 
-				(ind[0] + param.nX) % param.nX, 
-				(ind[1] + param.nY) % param.nY,
-				(ind[2] + param.nZ) % param.nZ };
+				(ind[0] + 2*param.nX) % (2*param.nX), 
+				(ind[1] + 2*param.nY) % (2*param.nY),
+				(ind[2] + 2*param.nZ) % (2*param.nZ) };
 	}
 
 	public Iterator<int[]> iterateUnitCells() {
 		List<int[]> list = new ArrayList<int[]>();
-		for (int i = 0; i < param.nX; i += 2) {
-			for (int j = 0; j < param.nY; j += 2) {
-				for (int k = 0; k < param.nZ; k += 2) {
+		for (int i = 0; i < 2*param.nX; i += 2) {
+			for (int j = 0; j < 2*param.nY; j += 2) {
+				for (int k = 0; k < 2*param.nZ; k += 2) {
 					if (crys.isValid(i, j, k)) {
 						list.add(normIndex(new int[] { i, j, k }));
 					} else {
@@ -579,9 +555,9 @@ public class Simulator implements Runnable {
 	
 	public Iterator<int[]> iterateAtoms() {
 		List<int[]> list = new ArrayList<int[]>();
-		for (int i = 0; i < param.nX; i++) {
-			for (int j = 0; j < param.nY; j++) {
-				for (int k = 0; k < param.nZ / 2; k++) {
+		for (int i = 0; i < 2*param.nX; i++) {
+			for (int j = 0; j < 2*param.nY; j++) {
+				for (int k = 0; k < param.nZ; k++) {
 					int z;
 					if ((i + j) % 2 == 0) {
 						z = 2 * k;
@@ -627,7 +603,8 @@ public class Simulator implements Runnable {
 		};
 	}
 
-	public double productWithBasisState(MyVector[] basisState) {
+	public double projBasisStateTotal(MyVector[] basisState) {
+		// TODO Optimize, such that not so many dot products are taken, thay slow everything remarkably down!
 		double proj = 0;
 		Iterator<int[]> it = iterateUnitCells();
 		while (it.hasNext()) {
@@ -638,8 +615,23 @@ public class Simulator implements Runnable {
 				proj += getSpin(index).dot(basisState[i]);
 			}
 		}
-		return proj / (double) nAtoms;
-	}		
+		return proj;// TODO only divide one time
+	}
+
+	public double projBasisStateChange(double oldValue, MyVector[] basisState) {
+		// TODO Optimize, such that not so many dot products are taken, thay slow everything remarkably down!
+		double proj = 0;
+		Iterator<int[]> it = iterateUnitCells();
+		while (it.hasNext()) {
+			int[] unitCellIndex = (int[]) it.next();
+			int[][] basis = crys.getBasisNB();
+			for (int i = 0; i < basis.length; i++) {
+				int[] index = addIndex(unitCellIndex, basis[i]);
+				proj += getSpin(index).dot(basisState[i]);
+			}
+		}
+		return proj;// TODO only divide one time
+	}
 	
 	/** Generates and sets spin-configuration */
 	private void newConfig() {
@@ -647,7 +639,7 @@ public class Simulator implements Runnable {
 		while (it.hasNext()) {
 			int[] index = it.next();
 			setSpin(index, randomVector());
-			setAtom(index, Element.Ni);	
+			setAtom(index, param.baseElem);	
 		}
 	}
 	
@@ -682,15 +674,15 @@ public class Simulator implements Runnable {
 		}
 	}	
 	
-	public void loadConfig(String filename) throws IOException {
+	public void loadConfig(File filename) throws IOException {
 		Iterator<int[]> it = iterateAtoms();
-		BufferedReader in = new BufferedReader(new FileReader(filename));
+		Scanner in = new Scanner(filename);
 		int i = 0;
-		while (it.hasNext()) {
+		while (in.hasNextLine()) {
 			int[] index = it.next();
-			String line = in.readLine();
-			if (line == null) {
-				break;
+			String line = in.nextLine();
+			if (line.isEmpty()) {
+				System.out.println("Warning: Not all atoms were assigned a spin.");
 			} else {
 				StringTokenizer st = new StringTokenizer(line);
 				double x = Double.parseDouble(st.nextToken());
@@ -708,15 +700,12 @@ public class Simulator implements Runnable {
 		System.out.println("Loaded in " + i + " spin orientations.");
 	}
 
-	public void saveConfig(String filename) {
-		File file = new File(filename);
-		Path path = file.toPath();
+	public void saveConfig(File configFile) {
 	
-		file = path.toAbsolutePath().toFile();
-		System.out.println("Prints end configuration to path: " + file.getAbsolutePath());
+		System.out.println("Prints end configuration to path: " + configFile.getAbsolutePath());
 	
 		try {
-			PrintStream out = new PrintStream(file);
+			PrintStream out = new PrintStream(configFile);
 			Iterator<int[]> it = iterateAtoms();
 			while(it.hasNext()) {
 				int[] index = it.next();

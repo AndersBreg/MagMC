@@ -1,2 +1,0 @@
-Temperature, #Steps, nX, nY, nZ, Ja, Jb, Jc, Jbc, Jac, Jab, Da, Db, Dc, Hx, Hy, Hz, 
-30.0, 500000.0, 3.0, 3.0, 3.0, -1.0, -1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 

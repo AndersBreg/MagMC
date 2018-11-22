@@ -22,6 +22,8 @@ public class Visualizer extends PApplet {
 	}
 
 	public void setup() {
+		
+//		removeExitEvent(getSurface());
 		cam = new PeasyCam(this, 100);
 		float cameraZ = (float) ((this.height / 2.0f) / tan(PI / 6f));
 		float FoV = PI / 3.0f;
@@ -29,6 +31,13 @@ public class Visualizer extends PApplet {
 		perspective(FoV, aspectRatio, 1f, cameraZ * 100.0f);
 		sphereDetail(10);
 	}
+
+//	static final void removeExitEvent(final PSurface surf) {
+//		final java.awt.Window win = ((processing.awt.PSurfaceAWT.SmoothCanvas) surf.getNative()).getFrame();
+//
+//		for (final java.awt.event.WindowListener evt : win.getWindowListeners())
+//			win.removeWindowListener(evt);
+//	}
 
 	public void draw() {
 		background(255, 255, 255);
@@ -195,13 +204,13 @@ public class Visualizer extends PApplet {
 		for (int i = 0; i < param.length; i++) {
 			text(paramNames[i] + " = " + param[i], cursorPosX, cursorPosY);
 			pushStyle();
-			if (5 <= i && i <= 7) {
-				fill(colorMapF((i - 5f) / 9f));
-				ellipse(cursorPosX - 5, cursorPosY - 5, 10, 10);
-			} else if (8 <= i && i <= 10) {
-				fill(colorMapF(map(i, 5f, 10f, 1f / 3f, 2f / 3f)));
-				ellipse(cursorPosX - 5, cursorPosY - 5, 10, 10);
-			}
+//			if (5 <= i && i <= 7) {
+//				fill(colorMapF((i - 5f) / 9f));
+//				ellipse(cursorPosX - 5, cursorPosY - 5, 10, 10);
+//			} else if (8 <= i && i <= 10) {
+//				fill(colorMapF(map(i, 5f, 10f, 1f / 3f, 2f / 3f)));
+//				ellipse(cursorPosX - 5, cursorPosY - 5, 10, 10);
+//			}
 			popStyle();
 			cursorPosY += 20;
 		}
@@ -296,4 +305,8 @@ public class Visualizer extends PApplet {
 		}
 		endShape();
 	}
+
+//	@Override
+//	public void exit() {
+//	}
 }

@@ -28,8 +28,12 @@ public final class MyVector {
 		case 2:
 			return z;
 		default:
-			return -10000;
+			throw new IndexOutOfBoundsException();
 		}
+	}
+	
+	public void setCoord(double val, int i) {
+		
 	}
 
 	public double dot(MyVector B) {
@@ -78,4 +82,5 @@ public final class MyVector {
 	public String toString() {
 		return String.format("(%f, %f, %f)", this.x, this.y, this.z);
 	}
+	
 }
