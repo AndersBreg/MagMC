@@ -1,54 +1,50 @@
 package main;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Paths;
 
-import constants.Crystal;
+import constants.*;
 
 public class Parameters {
 
 	/** Number of steps aggregation and cell dimensions */
-	
 	public int nSteps;
 	public int aggregate;
-	public int nX = 1; // TODO Shoud be changed to be half as large and all references to be 2*nX
+	public int nX = 1;
 	public int nY = 1;
 	public int nZ = 1;
 
-	public double temp = 1;
+	public double temp;
 
 	/** Applied H-field */
 	public MyVector H = new MyVector(0, 0, 0);
 
-	/** Filename and file extension type. */
-	public String filename;
-	public String extension;
-	public String dir;
-
+	public Element baseElem = Element.Ni;
+	
 	/** Orientation */
 	public Config initial;
 
-	// Boolean options:
-	private boolean perBoundsX = true;
-	private boolean perBoundsY = true;
-	private boolean perBoundsZ = true;
-
+	/** Standard number of parameters. */
 	public static final int nIntParam = 5;
 	public static final int nFloatParam = 4;
 	public static final int nBoolParam = 0;
 
-	public Crystal basis;
+//	/** Filename and file extension type. */
+//	public String filename;
+//	public String extension;
+//	public String dir;
+
+	// Boolean options:
+//	private boolean perBoundsX = true;
+//	private boolean perBoundsY = true;
+//	private boolean perBoundsZ = true;
 
 	private static final String[] paramNames = { "#Steps", "Aggregate", "nX", "nY", "nZ", "Temperature", "Hx", "Hy", "Hz" };
-//	public final double[] Jlist;
 
 	/**
 	 * Initialize with parameters: arrI: #steps, nX, nY, nZ arrF: temperature, Hx, Hy, Hz \n
 	 */
-	public Parameters(final int[] arrI, final double[] arrF, final String[] strings) {
+	public Parameters(final int[] arrI, final double[] arrF) {
 		if (arrI.length != nIntParam || arrF.length != nFloatParam) {
 			String[] paramNames = getNames();
 			String st = new String("");
@@ -58,21 +54,24 @@ public class Parameters {
 			throw new IndexOutOfBoundsException("Not the right amount of parameters\n" + st);
 		}
 
+		nSteps = arrI[0];
+		aggregate = arrI[1];
+		nX = arrI[2];
+		nY = arrI[3];
+		nZ = arrI[4];
+		
 		temp = arrF[0];
 		
 		H = new MyVector(arrF[1], arrF[2], arrF[3]);
-
-		nSteps = arrI[0];
-		aggregate = arrI[1];
-		nX = 2*arrI[2];
-		nY = 2*arrI[3];
-		nZ = 2*arrI[4];
+	}
+	
+	public Parameters() {
 		
-		dir = strings[0];
-		filename = strings[1]; // TODO Re write such that outputfile is directly given to simmulator.
-		extension = strings[2];
 	}
 
+	public Parameters clone() {
+		return new Parameters(new int[] {nSteps, aggregate, nX, nY, nZ}, new double[] {temp, H.x, H.y, H.z});
+	}
 	public static String[] getNames() {
 		return paramNames;
 	}
@@ -124,15 +123,17 @@ public class Parameters {
 		
 		int[] intParam = new int[Parameters.nIntParam];
 		double[] floatParam = new double[Parameters.nFloatParam];
+		
 		for (int i = 0; i < intParam.length; i++) {
 			String s = in.readLine();
 			intParam[i] = Integer.parseInt(s);
 		}
+		
 		for (int i = 0; i < intParam.length; i++) {
 			String s = in.readLine();
 			floatParam[i] = Double.parseDouble(s);			
 		}
 		in.close();
-		return new Parameters(intParam, floatParam, null);
+		return new Parameters(intParam, floatParam);
 	}
 }
