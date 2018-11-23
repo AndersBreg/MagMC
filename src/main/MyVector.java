@@ -32,8 +32,20 @@ public final class MyVector {
 		}
 	}
 	
-	public void setCoord(double val, int i) {
-		
+	public void setCoord(double val, int coord) {
+		switch (coord) {
+		case 0:
+			x = val;
+			break;
+		case 1:
+			y = val;
+			break;
+		case 2:
+			z = val;
+			break;
+		default:
+			throw new IndexOutOfBoundsException();
+		}
 	}
 
 	public double dot(MyVector B) {

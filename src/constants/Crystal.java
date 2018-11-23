@@ -13,6 +13,7 @@ public enum Crystal {
 			new MyVector(0.5f, 0.0f, 0.5f), new MyVector(0.5f, 0.5f, 0.0f) });
 	
 	// Commensurate basis structures:
+	/*
 	public static final MyVector[] Ax = new MyVector[] { 
 			new MyVector(1.0f, 0.0f, 0.0f), new MyVector(1.0f, 0.0f, 0.0f),
 			new MyVector(-1.0f, 0.0f, 0.0f), new MyVector(-1.0f, 0.0f, 0.0f) };
@@ -35,6 +36,7 @@ public enum Crystal {
 	public static final MyVector[] Cz = permute(Cy);
 	public static final MyVector[] Gz = permute(Gy);
 	public static final MyVector[] Fz = permute(Fy);
+	*/
 
 	private final MyVector[] basis;
 	private final int nBasis;

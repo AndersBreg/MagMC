@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import main.*;
 import processing.core.PApplet;
-
+import constants.BasisState;
 import constants.Crystal;
 import constants.Element;
 
@@ -118,7 +118,8 @@ public class simulationRunner {
 		File newDir = Paths.get(location.getCanonicalFile().toString(), newDirName).toFile();
 
 		if (newDir.exists() && newDir.isFile()) {
-			System.out.println("Warning: The specified location is file. Cannot set the directory");
+			System.out.println("Warning: The specified location is a file. Cannot set the directory");
+			throw new IOException();
 		} else if (newDir.exists() && newDir.isDirectory()){
 			location = newDir;
 			System.out.println("Directory set to " + location.getCanonicalPath());
@@ -373,8 +374,8 @@ public class simulationRunner {
 				sim[i] = new Simulator(paramRange[i], file);
 			}
 
-			sim[i].setElementFraction(Element.Ni, 1.0);
-			sim[i].configFromBasisState(Crystal.Cz); // Forces a basis configuration onto
+//			sim[i].setElementFraction(Element.Ni, 1.0);
+			sim[i].configFromBasisState(BasisState.Cz); // Forces a basis configuration onto
 			// the state
 			threads[i] = new Thread(sim[i]);
 			threads[i].start();
@@ -430,7 +431,7 @@ public class simulationRunner {
 
 	private static File findFilename(File location, String filename) throws IOException {
 		File file = null;
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < 10000; i++) {
 			file = Paths.get(location.getPath(), filename + "_" + i + ".txt").toFile();
 			if (!file.exists()) {
 				break;

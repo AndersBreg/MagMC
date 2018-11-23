@@ -181,7 +181,7 @@ public class Visualizer extends PApplet {
 		if (master.crys.isValid(index)) {
 			int[] indexA = master.normIndex(index);
 			MyVector A = master.positions[indexA[0]][indexA[1]][indexA[2]];
-			int[][][] NNlist = master.getNeighbours();
+			int[][][] NNlist = master.crys.getNNIndices();
 			int indexOfNeighboursToShow = 5;
 			int[][] neighbours = NNlist[indexOfNeighboursToShow];
 			for (int n = 0; n < neighbours.length; n++) {
