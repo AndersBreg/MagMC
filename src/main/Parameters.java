@@ -19,7 +19,8 @@ public class Parameters {
 	/** Applied H-field */
 	public MyVector H = new MyVector(0, 0, 0);
 
-	public Element baseElem = Element.Ni;
+	public Element baseElem = null;
+	public BasisState initState = null;
 	
 	/** Orientation */
 	public Config initial;
@@ -39,7 +40,7 @@ public class Parameters {
 //	private boolean perBoundsY = true;
 //	private boolean perBoundsZ = true;
 
-	private static final String[] paramNames = { "#Steps", "Aggregate", "nX", "nY", "nZ", "Temperature", "Hx", "Hy", "Hz" };
+	private static final String[] paramNames = { "#Steps", "Aggregate", "nX", "nY", "nZ", "Temperature", "Hx", "Hy", "Hz", "Element" };
 
 	/**
 	 * Initialize with parameters: arrI: #steps, nX, nY, nZ arrF: temperature, Hx, Hy, Hz \n
@@ -54,11 +55,11 @@ public class Parameters {
 			throw new IndexOutOfBoundsException("Not the right amount of parameters\n" + st);
 		}
 
-		nSteps = arrI[0];
-		aggregate = arrI[1];
 		nX = arrI[2];
 		nY = arrI[3];
 		nZ = arrI[4];
+		nSteps = arrI[0]*nX*nY*nZ*4;
+		aggregate = arrI[1]*nX*nY*nZ*4;
 		
 		temp = arrF[0];
 		
@@ -70,14 +71,17 @@ public class Parameters {
 	}
 
 	public Parameters clone() {
-		return new Parameters(new int[] {nSteps, aggregate, nX, nY, nZ}, new double[] {temp, H.x, H.y, H.z});
+		Parameters param = new Parameters(new int[] {nSteps, aggregate, nX, nY, nZ}, new double[] {temp, H.x, H.y, H.z});
+		param.baseElem = this.baseElem;
+		return param;
 	}
+	
 	public static String[] getNames() {
 		return paramNames;
 	}
 
 	public double[] asList() {
-		return new double[] { nSteps, aggregate, nX, nY, nZ, temp, H.x, H.y, H.z };
+		return new double[] { nSteps, aggregate, nX, nY, nZ, temp, H.x, H.y, H.z, baseElem.ordinal() };
 	}
 
 	private String getParam(int i) {
@@ -100,6 +104,8 @@ public class Parameters {
 			return Double.toString(H.y);
 		case (8):
 			return Double.toString(H.z);
+		case (9):
+			return baseElem.toString();
 		default:
 			return "";
 		}
