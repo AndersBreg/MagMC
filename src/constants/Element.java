@@ -2,10 +2,11 @@ package constants;
 
 public enum Element {
 	//Ja, Jb, Jc, Jbc, Jac, Jab, Da, Db, Dc, spin
-	Ni(0, 0.67, -0.05, 1.04, -0.11, 0.30, 0.339, 1.82, 0, 1.0),
-	Co(0, 0.105, 0.194, 0.743, -0.163, -0.181, 0.718, 0, 0.802, 1.5),
-	Fe(0, 0.3, 0.14, 0.77, 0.05, 0.14, 1.62, 0, 0.56, 2),
-	Test(0, 0, 0, -1, 0, 0, 0.0, 0.0, -1.0, 1.0); // Without DM interactions
+	Ni(0, 0.67, -0.05, 1.04, -0.11, 0.30, 0.339, 1.82, 0, 1.0), // Saturated magnetic moment of Ni-ions: 2.2 mu_B
+	Co(0,-0.06935, -0.1858, -0.45937, 0, 0, 0.712, 0, 0.802, 1.5), // Saturated magnetic moment of Ni-ions: 3.6 mu_B
+	Fe(0, 0.3, 0.14, 0.77, 0.05, 0.14, 1.62, 0, 0.56, 2.0),
+	TestCoup(0, 0, 0, -1, 0, 0, 0.0, 0.0, 0.0, 1.0), // For testing coupling
+	TestAni(0, 0, 0, 0, 0, 0, 0.0, 0.0, 1.0, 1.0); // For testing anisotropy
 	//      Ja, Jb, Jc, Jbc, Jac, Jab [Da, Db, Dc]: 
 	// Co: [0, -0.23, 0, -0.46, 0, 0], [0, 0, 0] from Ellen 2017
 	// Co: [0, 0.105, 0.194, 0.743, -0.163, -0.181], [0.718, 0, 0.802] from Wei Tian 2008
@@ -50,7 +51,7 @@ public enum Element {
 		return (this.Jlist[n] + at.Jlist[n])/2; //this.paramList + at.paramList;
 	}
 
-	public String toString() {
+	public String paramString() {
 		String s = "";
 		s += "[ " + Ja + ", " + Jb + ", " + Jc + ", " + Jbc + ", " + Jac + ", " + Jab + "], ";
 		s += "[" + Dx + ", " + Dy + ", " + Dz + "]";
@@ -63,7 +64,7 @@ public enum Element {
 			return 0;
 		case Co:
 			return 1;
-		case Test:
+		case TestCoup:
 			return 2;
 		default:
 			return -1;
