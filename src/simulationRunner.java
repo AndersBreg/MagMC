@@ -14,17 +14,19 @@ import constants.Element;
 public class simulationRunner {
 	
 	private static String name = "Sim";
-	private static String configFilename = "config";
-	private static File location = new File("..\\..\\");
+	private static File configFile;
+	private static File defaultDir = new File("C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data");
+	private static File curDir = new File(defaultDir.getAbsolutePath());
 	private static final File logFile = new File("C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data\\logFile.txt");
 
+	private static boolean useConfig = false;
 	private static boolean saveConfig = false;
-	private static boolean loadConfig = false;
 
+	private static boolean visualizing = false;
 	private static Visualizer vis;
 	private static Simulator[] sim;
 	private static Thread[] threads;
-	private static boolean parallel = true;
+	private static boolean parallel = false;
 	private static Parameters commonParam = null;
 
 	public static void main(String[] args) throws InterruptedException, IOException {
@@ -44,6 +46,10 @@ public class simulationRunner {
 			switch (command) {
 			case "setCommon":
 				commonParam = initCommon(args);
+				break;
+			case "setVars":
+			case "setCommonVars":
+				setCommonVars(commonParam, args);
 				break;
 			case "scanT":
 				paramRange = scanT(args);
@@ -75,11 +81,30 @@ public class simulationRunner {
 				setDir(newDirToSet);
 				break;
 			case "printDir":
-				System.out.println(location.getCanonicalPath());
+				System.out.println(curDir.getCanonicalPath());
+				break;
+			case "resetDir":
+				curDir = defaultDir;
+				System.out.println("Path reset to " + curDir.getCanonicalPath());
 				break;
 			case "mkDir":
 				String newDirToCreate = args[1];
 				mkDir(newDirToCreate);
+				break;
+			case "setConfigFilename":
+			case "setConfigFile":
+			case "setConfFile":
+				configFile = new File(args[1]);
+				useConfig = true;
+				break;
+			case "toggleConfFile":
+			case "toggleConfigFile":
+				useConfig = false;
+				break;
+			case "toggleVis":
+			case "toggleVisualizer":
+			case "toggleVisualiser":
+				visualizing = !visualizing;
 				break;
 			case "runSim":
 				System.out.println("Running simulations: ");
@@ -90,6 +115,7 @@ public class simulationRunner {
 				}
 				break;
 			case "help":
+			case "h":
 				writeHelp();
 				break;
 			case "exit":
@@ -115,36 +141,46 @@ public class simulationRunner {
 
 	private static void setDir(String newDirName) throws IOException {
 		
-		File newDir = Paths.get(location.getCanonicalFile().toString(), newDirName).toFile();
+		File newDir = Paths.get(defaultDir.getCanonicalFile().toString(), newDirName).toFile();
 
 		if (newDir.exists() && newDir.isFile()) {
 			System.out.println("Warning: The specified location is a file. Cannot set the directory");
 			throw new IOException();
 		} else if (newDir.exists() && newDir.isDirectory()){
-			location = newDir;
-			System.out.println("Directory set to " + location.getCanonicalPath());
+			curDir = newDir;
+			System.out.println("Directory set to " + curDir.getCanonicalPath());
 		} else {
 			System.out.println("The specified directory does not exists, creates a new one.");
-			mkDir(newDirName);
+			try {
+				mkDir(newDirName);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
 	private static void mkDir(String newDirName) throws IOException {		
-		File newDir = Paths.get(location.getCanonicalFile().toString(), newDirName).toFile();
+		File newDir = Paths.get(defaultDir.getCanonicalFile().toString(), newDirName).toFile();
+		System.out.println("Trying to create directory: " + newDir.toString());
 		
-		boolean success = newDir.mkdir();
+		boolean success = newDir.mkdirs();
 		if (success) {
-			System.out.println("Successfully created directory " + location.getCanonicalPath());
+			System.out.println("Successfully created directory " + newDir.getCanonicalPath());
+			curDir = newDir;
 		} else {
-			System.out.println("Could not create " + location.getCanonicalPath()
+			System.out.println("Could not create " + newDir.getCanonicalPath()
 					+ " a file or directory with that name already exists.");
-			setDir(newDirName);
+			try {
+				setDir(newDirName);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
 	private static void runSimul(Parameters[] paramRange) throws InterruptedException, IOException {
 		
-		if (!location.exists() || !location.isDirectory()) {
+		if (!curDir.exists() || !curDir.isDirectory()) {
 			throw new IOException();
 		}
 		
@@ -157,40 +193,6 @@ public class simulationRunner {
 		System.out.println("Total time taken: " + formatTime(System.currentTimeMillis() - startTime));
 	}
 
-	private static Parameters[] scanTH(String[] args, int coord) throws InterruptedException, IOException {
-		try {
-			if (commonParam == null) {
-				throw new NullPointerException("Common Parameters is not set.");
-			}
-			double tStart = Double.parseDouble(args[1]);
-			double dT = Double.parseDouble(args[2]);
-			int nT = Integer.parseInt(args[3]);
-
-			double hStart = Double.parseDouble(args[4]);
-			double dH = Double.parseDouble(args[5]);
-			int nH = Integer.parseInt(args[6]);
-
-			Parameters[] paramRange = new Parameters[nT*nH];
-			for (int t = 0; t < nT; t++) {
-				for (int h = 0; h < nH; h++) {
-					paramRange[t] = commonParam.clone();
-					paramRange[t].temp = tStart + t * dT;
-					paramRange[t].H.setCoord(hStart + h * dH, coord);
-				}
-			}
-			return paramRange;
-		} catch (ArrayIndexOutOfBoundsException e) {
-			System.out.println("Not enough arguments.");
-			System.out.println(e.toString());
-			writeHelp();
-		} catch (NumberFormatException e) {
-			System.out.println("Arguments values not of the right format.");
-			System.out.println(e.toString());
-			writeHelp();
-		}
-		return null;
-	}
-
 	private static Parameters[] scanT(String[] args) throws InterruptedException, IOException {
 		try {
 			if (commonParam == null) {
@@ -198,7 +200,8 @@ public class simulationRunner {
 			}
 			double tStart = Double.parseDouble(args[1]);
 			double dT = Double.parseDouble(args[2]);
-			int nT = Integer.parseInt(args[3]);
+			double tEnd = Integer.parseInt(args[3]);
+			int nT = (int) ((tEnd - tStart)/dT); 
 
 			Parameters[] paramRange = new Parameters[nT];
 			for (int n = 0; n < nT; n++) {
@@ -226,12 +229,14 @@ public class simulationRunner {
 			}
 			double hStart = Double.parseDouble(args[1]);
 			double dH = Double.parseDouble(args[2]);
-			int nH = Integer.parseInt(args[3]);
-
+			double hEnd = Integer.parseInt(args[3]);
+			int nH = (int) ((hEnd - hStart)/dH);
+			
 			Parameters[] paramRange = new Parameters[nH];
 			for (int n = 0; n < nH; n++) {
 				paramRange[n] = commonParam.clone();
 				paramRange[n].H.setCoord(hStart + n * dH, coord);
+				System.out.println(paramRange[n].toString());
 			}
 			return paramRange;
 		} catch (ArrayIndexOutOfBoundsException e) {
@@ -246,8 +251,45 @@ public class simulationRunner {
 		return null;
 	}
 
+	private static Parameters[] scanTH(String[] args, int coord) throws InterruptedException, IOException {
+		try {
+			if (commonParam == null) {
+				throw new NullPointerException("Common Parameters is not set.");
+			}
+			double tStart = Double.parseDouble(args[1]);
+			double dT = Double.parseDouble(args[2]);
+			double tEnd = Double.parseDouble(args[3]);
+			int nT = (int) ((tEnd - tStart)/dT);
+	
+			double hStart = Double.parseDouble(args[4]);
+			double dH = Double.parseDouble(args[5]);
+			double hEnd = Double.parseDouble(args[6]);
+			int nH = (int) ((hEnd - hStart)/dH);
+			
+			Parameters[] paramRange = new Parameters[nT*nH];
+			for (int t = 0; t < nT; t++) {
+				for (int h = 0; h < nH; h++) {
+					paramRange[h+t*nH] = commonParam.clone();
+					paramRange[h+t*nH].temp = tStart + t * dT;
+					paramRange[h+t*nH].H.setCoord(hStart + h * dH, coord);
+					System.out.println(paramRange[h+t*nH].toString());
+				}
+			}
+			return paramRange;
+		} catch (ArrayIndexOutOfBoundsException e) {
+			System.out.println("Not enough arguments.");
+			System.out.println(e.toString());
+			writeHelp();
+		} catch (NumberFormatException e) {
+			System.out.println("Arguments values not of the right format.");
+			System.out.println(e.toString());
+			writeHelp();
+		}
+		return null;
+	}
+
 	private static Parameters initCommon(String[] args) {
-		if (args.length > 7) {
+		if (args.length > 8) {
 			throw new ArrayIndexOutOfBoundsException("Too many arguments for common parameters.");
 		} else if(args.length < 7) {
 			throw new NullPointerException("Not enough arguments to initialize common parameters.");
@@ -259,12 +301,24 @@ public class simulationRunner {
 		commonParam.nY = Integer.parseInt(args[4]);
 		commonParam.nZ = Integer.parseInt(args[5]);
 		commonParam.baseElem = Element.valueOf(args[6]);
-//		commonParam.H.x = Double.parseDouble(args[6]);
-//		commonParam.H.y = Double.parseDouble(args[7]);
-//		commonParam.H.z = Double.parseDouble(args[8]);
+		if (args.length == 8) {
+			commonParam.initState = BasisState.valueOf(args[7]);
+		}
 		return commonParam;
 	}
-
+	
+	private static void setCommonVars(Parameters param, String[] args) {
+		if (args.length > 5) {
+			throw new ArrayIndexOutOfBoundsException("Too many arguments for common parameters.");
+		} else if(args.length < 5) {
+			throw new NullPointerException("Not enough arguments to initialize common parameters.");
+		}
+		param.temp = Double.parseDouble(args[1]);
+		param.H.x = Double.parseDouble(args[2]);
+		param.H.y= Double.parseDouble(args[3]);
+		param.H.z = Double.parseDouble(args[4]);
+	}
+	
 	private static void writeHelp() {
 //		try {
 //			Scanner sc = new Scanner(new File("help.txt"));
@@ -283,7 +337,7 @@ public class simulationRunner {
 				"		-help, 			Writes this text.\r\n" + 
 				"\r\n" + 
 				"		-setCommon 		Sets the common parameters for the simulations\r\n" +
-				"			Format:		nSteps nAggre nx ny nz\r\n" + 
+				"			Format:		nSteps nAggre nx ny nz Elem [ Base_State ]\r\n" + 
 				"\r\n" +
 				"		-scanT			Makes a scan ramping up or down the temp field.\r\n" + 
 				"			Arguments after the command should be in the format:\r\n" + 
@@ -322,84 +376,90 @@ public class simulationRunner {
 
 	private static void runSequential(Parameters[] paramRange, long startTime)
 			throws InterruptedException, IOException {
-		File[] configFiles = new File[paramRange.length];
 
+		sim = new Simulator[paramRange.length];
+		threads = new Thread[paramRange.length];
+		
 		for (int i = 0; i < paramRange.length; i++) {
-			File file = findFilename(location, name);
-			if (loadConfig || saveConfig) {
-				String configFile = location + name + String.format("_config_(%d,%d,%d)_T=%1.2f_Hb=%1.2f.txt",
-						paramRange[i].nX, paramRange[i].nY, paramRange[i].nZ, paramRange[i].temp, paramRange[i].H.z);
-				configFiles[i] = new File(configFile);
-			}
+			File file = findFilename(curDir, name);
 
-			if (loadConfig) {
-				sim[i] = new Simulator(paramRange[i], file, configFiles[i]);
+			if (useConfig && configFile != null && configFile.exists()) {
+				sim[i] = new Simulator(paramRange[i], file, configFile);
 			} else {
 				sim[i] = new Simulator(paramRange[i], file);
+				configFile = curDir.toPath().resolve(name+"_end_config.txt").toFile(); 
+			}
+			if (paramRange[i].initState != null) {
+				sim[i].configFromBasisState(paramRange[i].initState); // Forces a basis configuration onto
+				// the state
 			}
 		}
 
 		for (int i = 0; i < paramRange.length; i++) {
-			Thread thread = new Thread(sim[i]);
+			threads[i] = new Thread(sim[i]);
 
-			thread.start();
-			waitMessage(startTime, i);
-			thread.join();
+			threads[i].start();
+			if (visualizing) {
+				int vIndex = i;
+				vis = new Visualizer(sim[vIndex]);
+				if (i == 0) {
+					String[] myArgs = { "test.Visualizer" };
+					PApplet.runSketch(myArgs, vis);	
+				}
+			}
+
+			waitMessageParallel(startTime, i);
+			threads[i].join();
 
 			writeToLogFile(sim[i], formatTime(System.currentTimeMillis() - startTime));
-			sim[i].saveConfig(configFiles[i]);
+			sim[i].saveConfig(configFile);
 			if (i + 1 != sim.length) {
-				sim[i + 1].loadConfig(configFiles[i]);
+				sim[i + 1].loadConfig(configFile);
 			}
 		}
 	}
 
 	private static void runParallel(Parameters[] paramRange, long startTime) throws InterruptedException, IOException {
-		File[] configFiles = new File[paramRange.length];
 
 		sim = new Simulator[paramRange.length];
 		threads = new Thread[paramRange.length];
 
 		for (int i = 0; i < paramRange.length; i++) {
-			File file = findFilename(location, name);
-			if (loadConfig || saveConfig) {
-				String configFile = location + name + String.format("_config_(%d,%d,%d)_T=%1.2f_Hb=%1.2f.txt",
-						paramRange[i].nX, paramRange[i].nY, paramRange[i].nZ, paramRange[i].temp, paramRange[i].H.z);
-				configFiles[i] = new File(configFile);
-			}
-
-			if (loadConfig) {
-				sim[i] = new Simulator(paramRange[i], file, configFiles[i]);
+			File file = findFilename(curDir, name);
+			if (configFile.exists()) {
+				sim[i] = new Simulator(paramRange[i], file, configFile);
 			} else {
 				sim[i] = new Simulator(paramRange[i], file);
 			}
-
-//			sim[i].setElementFraction(Element.Ni, 1.0);
-			sim[i].configFromBasisState(BasisState.Cz); // Forces a basis configuration onto
-			// the state
+			if (paramRange[i].initState != null) {
+				sim[i].configFromBasisState(paramRange[i].initState); // Forces a basis configuration onto
+				// the state	
+			}
 			threads[i] = new Thread(sim[i]);
 			threads[i].start();
 		}
 
 		// Visualizing:
-//		int vIndex = 0;
-//		vis = new Visualizer(sim[vIndex]);
-//		String[] myArgs = { "test.Visualizer" };
-//		PApplet.runSketch(myArgs, vis);
+		if (visualizing) {
+			int vIndex = 0;
+			vis = new Visualizer(sim[vIndex]);
+			String[] myArgs = { "test.Visualizer" };
+			PApplet.runSketch(myArgs, vis);
+		}
 		
 		// Waiting message:
-		waitMessage(startTime, 0);
+		waitMessageParallel(startTime, 0);
 		for (int i = 0; i < paramRange.length; i++) {
 			threads[i].join();
 			writeToLogFile(sim[i], Long.toString(System.currentTimeMillis() - startTime));
 			if (saveConfig) {
-				sim[i].saveConfig(configFiles[i]);
+				sim[i].saveConfig(configFile);
 			}
 		}
 //		vis.exit();
 	}
 
-	private static void waitMessage(long startTime, int i) throws InterruptedException {
+	private static void waitMessageParallel(long startTime, int i) throws InterruptedException {
 		while (threads[i].isAlive()) {
 			double progress = sim[i].step / (double) sim[i].param.nSteps;
 			System.out.format("Simulation progress: %1.4f", progress);
@@ -407,10 +467,22 @@ public class simulationRunner {
 			long ETA = (long) (elapsed * (1 / progress - 1));
 
 			System.out.println(", estimated finish time: " + formatTime(ETA));
-			Thread.sleep(1000);
+			Thread.sleep(2000);
 		}
 	}
 
+	private static void waitMessageSequential(long startTime, int i, int paramRangeLength) throws InterruptedException {
+		while (threads[i].isAlive()) {
+			double progress = sim[i].step / (double) sim[i].param.nSteps;
+			System.out.format("Simulation progress: %1.4f", (progress + i) / paramRangeLength);
+			long elapsed = System.currentTimeMillis() - startTime;
+			long ETA = (long) (elapsed * (1 / progress - 1));
+
+			System.out.println(", estimated finish time: " + formatTime(ETA));
+			Thread.sleep(2000);
+		}
+	}
+	
 	private static String formatTime(long ETA) {
 		return String.format("%d min, %d sec", TimeUnit.MILLISECONDS.toMinutes(ETA),
 				TimeUnit.MILLISECONDS.toSeconds(ETA)
@@ -432,7 +504,7 @@ public class simulationRunner {
 	private static File findFilename(File location, String filename) throws IOException {
 		File file = null;
 		for (int i = 0; i < 10000; i++) {
-			file = Paths.get(location.getPath(), filename + "_" + i + ".txt").toFile();
+			file = location.toPath().resolve(filename + "_" + i + ".txt").toFile();
 			if (!file.exists()) {
 				break;
 			}

@@ -91,11 +91,13 @@ public class Simulator implements Runnable {
 	
 	private double delta;
 	public int nRejects = 0;
+
+	private long seed = 0;
 	/**
 	 * Parameter values: #steps, nX, nY, nZ, Temperature, Hx, Hy, Hz
 	 * @throws FileAlreadyExistsException 
 	 */
-	public Simulator(Parameters newParam, File file) throws FileAlreadyExistsException { 
+	public Simulator(Parameters newParam, File file) throws FileAlreadyExistsException {
 		this.param = newParam;
 		setup();
 		outputFile = file;
@@ -122,7 +124,11 @@ public class Simulator implements Runnable {
 		atomType = new Element[2*param.nX][2*param.nY][2*param.nZ];
 		spins = new MyVector[2*param.nX][2*param.nY][2*param.nZ];
 
-		rand = new Random(0);
+		if (seed != 0) {
+			rand = new Random(seed);			
+		} else {
+			rand = new Random();
+		}
 
 		mid = new MyVector(param.nX * .5, param.nY * .5, param.nZ * .5);
 		mid = scaleVec(a, b, c, mid);
@@ -148,12 +154,15 @@ public class Simulator implements Runnable {
 		try {
 			System.out.println("Prints data to path: " + outputFile.getCanonicalPath() );
 			PrintStream out = new PrintStream(outputFile);
+			// Prints parameter names:
 			String[] names = Parameters.getNames();
 			for (int i = 0; i < names.length; i++) {
 				out.print(names[i] + ", ");
 			}
 			out.print("Ni frac, Co frac, Fe frac, ");
 			out.println();
+			
+			// Prints the parameter values:
 			double[] parameters = param.asList();
 			for (int i = 0; i < parameters.length; i++) {
 				out.print(parameters[i] + ", ");
@@ -161,9 +170,9 @@ public class Simulator implements Runnable {
 			out.print(getFraction(Element.Ni) + ", ");
 			out.print(getFraction(Element.Co) + ", ");
 			out.println(getFraction(Element.Fe) + ", ");
-			out.println("Ni param: " + Element.Ni.toString());
-			out.println("Co param: " + Element.Co.toString());
-			out.println("Fe param: " + Element.Fe.toString());
+			out.println("Ni param: " + Element.Ni.paramString());
+			out.println("Co param: " + Element.Co.paramString());
+			out.println("Fe param: " + Element.Fe.paramString());
 			out.println("Output: ");
 			out.println("energy, en. var, "
 					+ "FX, FX var, FY, FY var, FZ, FZ var, "
@@ -205,17 +214,17 @@ public class Simulator implements Runnable {
 		double energy_Mean = energy_Sum / param.aggregate;
 		double energy_Var = (energy_SumSq / param.aggregate - energy_Mean * energy_Mean);
 
-		double[][] baseProjMean = new double[4][3]; 
-		double[][] baseProjVar = new double[4][3]; 
+		double[][] baseProj_Mean = new double[4][3]; 
+		double[][] baseProj_Var = new double[4][3]; 
 		for (int state = 0; state < 4; state++) {
 			for (int coord = 0; coord < 3; coord++) {
-				baseProjMean[state][coord] = baseProj_Sum[state][coord] / param.aggregate;
-				baseProjVar[state][coord]  = 
-						(baseProj_SumSq[state][coord] / param.aggregate - baseProjMean[state][coord] * baseProjMean[state][coord]);
+				baseProj_Mean[state][coord] = baseProj_Sum[state][coord] / param.aggregate;
+				baseProj_Var[state][coord]  = 
+						(baseProj_SumSq[state][coord] / param.aggregate - baseProj_Mean[state][coord] * baseProj_Mean[state][coord]);
 			}
 		}
 
-		printVals(out, energy_Mean, energy_Var, baseProjMean, baseProjVar);
+		printVals(out, energy_Mean, energy_Var, baseProj_Mean, baseProj_Var);
 		
 		energy_Sum = 0;
 		energy_SumSq = 0;

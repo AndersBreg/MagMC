@@ -1,9 +1,11 @@
 package main;
 
 import processing.core.*;
+import processing.awt.*;
 
 import java.util.Iterator;
 import java.util.List;
+import java.awt.*;
 
 import main.*;
 import peasy.*;
@@ -21,9 +23,12 @@ public class Visualizer extends PApplet {
 		size(800, 600, P3D);
 	}
 
+//	@Override
+//	public void exit() {
+//		
+//	}
+	
 	public void setup() {
-		
-//		removeExitEvent(getSurface());
 		cam = new PeasyCam(this, 100);
 		float cameraZ = (float) ((this.height / 2.0f) / tan(PI / 6f));
 		float FoV = PI / 3.0f;
@@ -305,8 +310,4 @@ public class Visualizer extends PApplet {
 		}
 		endShape();
 	}
-
-//	@Override
-//	public void exit() {
-//	}
 }

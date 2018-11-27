@@ -40,7 +40,7 @@ public class Parameters {
 //	private boolean perBoundsY = true;
 //	private boolean perBoundsZ = true;
 
-	private static final String[] paramNames = { "#Steps", "Aggregate", "nX", "nY", "nZ", "Temperature", "Hx", "Hy", "Hz", "Element" };
+	private static final String[] paramNames = { "#Steps", "Aggregate", "nX", "nY", "nZ", "Temperature", "Hx", "Hy", "Hz"};
 
 	/**
 	 * Initialize with parameters: arrI: #steps, nX, nY, nZ arrF: temperature, Hx, Hy, Hz \n
@@ -81,7 +81,7 @@ public class Parameters {
 	}
 
 	public double[] asList() {
-		return new double[] { nSteps, aggregate, nX, nY, nZ, temp, H.x, H.y, H.z, baseElem.ordinal() };
+		return new double[] { nSteps, aggregate, nX, nY, nZ, temp, H.x, H.y, H.z};
 	}
 
 	private String getParam(int i) {
