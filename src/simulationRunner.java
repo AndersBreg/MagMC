@@ -76,6 +76,21 @@ public class simulationRunner {
 			case "scanBz":
 				paramRange = scanB(lineArgs, 2);
 				break;
+				
+			case "scanAngleBYZ":
+			case "scanAngleYZ":
+				paramRange = scanBangle(lineArgs, 0);
+				break;
+			case "scanAngleBZX":
+			case "scanAngleZX":
+			case "scanAngleXZ":
+				paramRange = scanBangle(lineArgs, 1);
+				break;
+			case "scanAngleBXY":
+			case "scanAngleXY":
+				paramRange = scanBangle(lineArgs, 2);
+				break;
+				
 			case "scanTBx":
 				paramRange = scanTB(lineArgs, 0);
 				break;
@@ -111,12 +126,13 @@ public class simulationRunner {
 					lineArgs[1] = lineArgs[1]+".txt";
 				}
 				File file = Paths.get(curDir.getPath(), lineArgs[1]).toFile();
+				System.out.println("Looking for file: " + file.getCanonicalPath());
 				if (!file.exists()) {
 					System.out.println("The specified configuration file does not exist.");
 				}
 				configFile = file;
 				useConfig = true;
-				System.out.println("Loaded in config file:" + configFile.getName());
+				System.out.println("Loaded in config file: " + configFile.getName());
 //				Scanner confFilePrinter = new Scanner(configFile);
 //				while (confFilePrinter.hasNext()) {
 //					String string = (String) confFilePrinter.next();
@@ -275,6 +291,39 @@ public class simulationRunner {
 			for (int n = 0; n < nH; n++) {
 				paramRange[n] = commonParam.clone();
 				paramRange[n].B.setCoord(hStart + n * dH, coord);
+				System.out.println(paramRange[n].toString());
+			}
+			return paramRange;
+		} catch (ArrayIndexOutOfBoundsException e) {
+			System.out.println("Not enough arguments.");
+			System.out.println(e.toString());
+			writeHelp();
+		} catch (NumberFormatException e) {
+			System.out.println("Arguments not of the right type.");
+			System.out.println(e.toString());
+			writeHelp();
+		}
+		return null;
+	}
+
+	private static Parameters[] scanBangle(String[] args, int i) {
+		try {
+			if (commonParam == null) {
+				throw new NullPointerException("Common Parameters is not set.");
+			}
+			
+			double angStart = Double.parseDouble(args[1]);
+			double dAng = Double.parseDouble(args[2]);
+			double angEnd = Integer.parseInt(args[3]);
+			double field = Double.parseDouble(args[4]);
+			int nAng = (int) ((angEnd - angStart)/dAng);
+			
+			Parameters[] paramRange = new Parameters[nAng];
+			for (int n = 0; n < nAng; n++) {
+				paramRange[n] = commonParam.clone();
+				double ang = Math.toRadians(angStart + n * dAng);
+				paramRange[n].B.setCoord(field * Math.cos(ang), (i+1) % 3);
+				paramRange[n].B.setCoord(field * Math.sin(ang), (i+2) % 3);
 				System.out.println(paramRange[n].toString());
 			}
 			return paramRange;
