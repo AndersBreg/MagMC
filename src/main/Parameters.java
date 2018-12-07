@@ -17,7 +17,7 @@ public class Parameters {
 	public double temp;
 
 	/** Applied H-field */
-	public MyVector H = new MyVector(0, 0, 0);
+	public MyVector B = new MyVector(0, 0, 0);
 
 	public Element baseElem = null;
 	public BasisState initState = null;
@@ -63,7 +63,7 @@ public class Parameters {
 		
 		temp = arrF[0];
 		
-		H = new MyVector(arrF[1], arrF[2], arrF[3]);
+		B = new MyVector(arrF[1], arrF[2], arrF[3]);
 	}
 	
 	public Parameters() {
@@ -71,7 +71,7 @@ public class Parameters {
 	}
 
 	public Parameters clone() {
-		Parameters param = new Parameters(new int[] {nSteps, aggregate, nX, nY, nZ}, new double[] {temp, H.x, H.y, H.z});
+		Parameters param = new Parameters(new int[] {nSteps, aggregate, nX, nY, nZ}, new double[] {temp, B.x, B.y, B.z});
 		param.baseElem = this.baseElem;
 		return param;
 	}
@@ -81,7 +81,7 @@ public class Parameters {
 	}
 
 	public double[] asList() {
-		return new double[] { nSteps, aggregate, nX, nY, nZ, temp, H.x, H.y, H.z};
+		return new double[] { nSteps, aggregate, nX, nY, nZ, temp, B.x, B.y, B.z};
 	}
 
 	private String getParam(int i) {
@@ -99,11 +99,11 @@ public class Parameters {
 		case (5):
 			return Double.toString(temp);
 		case (6):
-			return Double.toString(H.x);
+			return Double.toString(B.x);
 		case (7):
-			return Double.toString(H.y);
+			return Double.toString(B.y);
 		case (8):
-			return Double.toString(H.z);
+			return Double.toString(B.z);
 		case (9):
 			return baseElem.toString();
 		default:
@@ -119,11 +119,11 @@ public class Parameters {
 		return S;
 	}
 
-	public void setInitConfig(Config newConfig) {
+	private void setInitConfig(Config newConfig) {
 		this.initial = newConfig;
 	}
 	
-	public static Parameters loadParameters(String dir, String filename) throws IOException {
+	private static Parameters loadParameters(String dir, String filename) throws IOException {
 		File file = Paths.get(dir, filename + ".txt").toFile();
 		BufferedReader in = new BufferedReader(new FileReader(file));
 		

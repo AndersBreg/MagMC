@@ -1,23 +1,30 @@
 
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.nio.file.StandardCopyOption;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
-import main.*;
-import processing.core.PApplet;
 import constants.BasisState;
-import constants.Crystal;
 import constants.Element;
+import main.Parameters;
+import main.Simulator;
+import main.Visualizer;
+import processing.core.PApplet;
 
 public class simulationRunner {
 	
 	private static String name = "Sim";
+	private static char sep = File.separatorChar;
+	private static File parentDir = new File(".."+sep);
 	private static File configFile;
-	private static File defaultDir = new File("C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data");
-	private static File curDir = new File(defaultDir.getAbsolutePath());
-	private static final File logFile = new File("C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data\\logFile.txt");
+	private static File defaultDataDir = new File(parentDir, "."+sep+"Data"+sep);
+	private static File curDir = new File(defaultDataDir.getAbsolutePath());
+	private static final File logFile = new File("."+sep+"logFile.txt");
 
 	private static boolean useConfig = false;
 	private static boolean saveConfig = false;
@@ -31,74 +38,106 @@ public class simulationRunner {
 
 	public static void main(String[] args) throws InterruptedException, IOException {
 
+		parentDir = new File(args[0]);
+		defaultDataDir = new File(parentDir, "Data");
+		curDir = new File(defaultDataDir.getAbsolutePath());
+		
 		Scanner in = new Scanner(System.in);
 		Parameters[] paramRange = null;
 		System.out.println("Welcome to magnetic monte carlo Markov chain simulator utility");
 		
 		while (in.hasNext()) {
 			String line = in.nextLine();
-			args = line.split(" ");
-			if (args.length < 1)
+			System.out.println(line);
+			String[] lineArgs = line.split(" ");
+			if (lineArgs.length < 1)
 				break;
-			String command = args[0];
-			if (args[0].charAt(0) == '#')
+			String command = lineArgs[0];
+			if (lineArgs[0].charAt(0) == '#')
 				continue;
+			
 			switch (command) {
 			case "setCommon":
-				commonParam = initCommon(args);
+				commonParam = initCommon(lineArgs);
 				break;
 			case "setVars":
 			case "setCommonVars":
-				setCommonVars(commonParam, args);
+				setCommonVars(commonParam, lineArgs);
 				break;
 			case "scanT":
-				paramRange = scanT(args);
+				paramRange = scanT(lineArgs);
 				break;
-			case "scanHx":
-				paramRange = scanH(args, 0);
+			case "scanBx":
+				paramRange = scanB(lineArgs, 0);
 				break;
-			case "scanHy":
-				paramRange = scanH(args, 1);
+			case "scanBy":
+				paramRange = scanB(lineArgs, 1);
 				break;
-			case "scanHz":
-				paramRange = scanH(args, 2);
+			case "scanBz":
+				paramRange = scanB(lineArgs, 2);
 				break;
-			case "scanTHx":
-				paramRange = scanTH(args, 0);
+			case "scanTBx":
+				paramRange = scanTB(lineArgs, 0);
 				break;
-			case "scanTHy":
-				paramRange = scanTH(args, 1);
+			case "scanTBy":
+				paramRange = scanTB(lineArgs, 1);
 				break;
-			case "scanTHz":
-				paramRange = scanTH(args, 2);
+			case "scanTBz":
+				paramRange = scanTB(lineArgs, 2);
 				break;
 			case "printParam":
 				printParam(paramRange);
 				break;
 				
 			case "setDir":
-				String newDirToSet = args[1];
+				String newDirToSet = lineArgs[1];
 				setDir(newDirToSet);
 				break;
 			case "printDir":
 				System.out.println(curDir.getCanonicalPath());
 				break;
 			case "resetDir":
-				curDir = defaultDir;
+				curDir = defaultDataDir;
 				System.out.println("Path reset to " + curDir.getCanonicalPath());
 				break;
 			case "mkDir":
-				String newDirToCreate = args[1];
+				String newDirToCreate = lineArgs[1];
 				mkDir(newDirToCreate);
 				break;
-			case "setConfigFilename":
-			case "setConfigFile":
-			case "setConfFile":
-				configFile = new File(args[1]);
+				
+			case "loadConfigFile":
+			case "loadConfFile":
+				if (!lineArgs[1].endsWith(".txt")) {
+					lineArgs[1] = lineArgs[1]+".txt";
+				}
+				File file = Paths.get(curDir.getPath(), lineArgs[1]).toFile();
+				if (!file.exists()) {
+					System.out.println("The specified configuration file does not exist.");
+				}
+				configFile = file;
+				useConfig = true;
+				System.out.println("Loaded in config file:" + configFile.getName());
+//				Scanner confFilePrinter = new Scanner(configFile);
+//				while (confFilePrinter.hasNext()) {
+//					String string = (String) confFilePrinter.next();
+//					System.out.println(string);
+//				}
+				break;
+			case "saveConfig":
+			case "saveConfigFile":
+			case "saveConfigCopy":
+				if (!lineArgs[1].endsWith(".txt")) {
+					lineArgs[1] = lineArgs[1]+".txt";
+				}
+				Path p = Paths.get(curDir.toString(), lineArgs[1]);
+				Files.copy(configFile.toPath(), p, StandardCopyOption.REPLACE_EXISTING );
+				break;
+			case "enableConfFile":
+			case "enableConfigFile":
 				useConfig = true;
 				break;
-			case "toggleConfFile":
-			case "toggleConfigFile":
+			case "disableConfFile":
+			case "disableConfigFile":
 				useConfig = false;
 				break;
 			case "toggleVis":
@@ -141,7 +180,7 @@ public class simulationRunner {
 
 	private static void setDir(String newDirName) throws IOException {
 		
-		File newDir = Paths.get(defaultDir.getCanonicalFile().toString(), newDirName).toFile();
+		File newDir = Paths.get(defaultDataDir.getCanonicalFile().toString(), newDirName).toFile();
 
 		if (newDir.exists() && newDir.isFile()) {
 			System.out.println("Warning: The specified location is a file. Cannot set the directory");
@@ -160,7 +199,7 @@ public class simulationRunner {
 	}
 
 	private static void mkDir(String newDirName) throws IOException {		
-		File newDir = Paths.get(defaultDir.getCanonicalFile().toString(), newDirName).toFile();
+		File newDir = Paths.get(defaultDataDir.getCanonicalFile().toString(), newDirName).toFile();
 		System.out.println("Trying to create directory: " + newDir.toString());
 		
 		boolean success = newDir.mkdirs();
@@ -222,7 +261,7 @@ public class simulationRunner {
 		return null;
 	}
 
-	private static Parameters[] scanH(String[] args, int coord) throws InterruptedException {
+	private static Parameters[] scanB(String[] args, int coord) throws InterruptedException {
 		try {
 			if (commonParam == null) {
 				throw new NullPointerException("Common Parameters is not set.");
@@ -235,7 +274,7 @@ public class simulationRunner {
 			Parameters[] paramRange = new Parameters[nH];
 			for (int n = 0; n < nH; n++) {
 				paramRange[n] = commonParam.clone();
-				paramRange[n].H.setCoord(hStart + n * dH, coord);
+				paramRange[n].B.setCoord(hStart + n * dH, coord);
 				System.out.println(paramRange[n].toString());
 			}
 			return paramRange;
@@ -251,7 +290,7 @@ public class simulationRunner {
 		return null;
 	}
 
-	private static Parameters[] scanTH(String[] args, int coord) throws InterruptedException, IOException {
+	private static Parameters[] scanTB(String[] args, int coord) throws InterruptedException, IOException {
 		try {
 			if (commonParam == null) {
 				throw new NullPointerException("Common Parameters is not set.");
@@ -271,7 +310,7 @@ public class simulationRunner {
 				for (int h = 0; h < nH; h++) {
 					paramRange[h+t*nH] = commonParam.clone();
 					paramRange[h+t*nH].temp = tStart + t * dT;
-					paramRange[h+t*nH].H.setCoord(hStart + h * dH, coord);
+					paramRange[h+t*nH].B.setCoord(hStart + h * dH, coord);
 					System.out.println(paramRange[h+t*nH].toString());
 				}
 			}
@@ -314,9 +353,9 @@ public class simulationRunner {
 			throw new NullPointerException("Not enough arguments to initialize common parameters.");
 		}
 		param.temp = Double.parseDouble(args[1]);
-		param.H.x = Double.parseDouble(args[2]);
-		param.H.y= Double.parseDouble(args[3]);
-		param.H.z = Double.parseDouble(args[4]);
+		param.B.x = Double.parseDouble(args[2]);
+		param.B.y= Double.parseDouble(args[3]);
+		param.B.z = Double.parseDouble(args[4]);
 	}
 	
 	private static void writeHelp() {
@@ -408,7 +447,7 @@ public class simulationRunner {
 				}
 			}
 
-			waitMessageParallel(startTime, i);
+			waitMessageSequential(startTime, i, paramRange.length);
 			threads[i].join();
 
 			writeToLogFile(sim[i], formatTime(System.currentTimeMillis() - startTime));
@@ -473,8 +512,8 @@ public class simulationRunner {
 
 	private static void waitMessageSequential(long startTime, int i, int paramRangeLength) throws InterruptedException {
 		while (threads[i].isAlive()) {
-			double progress = sim[i].step / (double) sim[i].param.nSteps;
-			System.out.format("Simulation progress: %1.4f", (progress + i) / paramRangeLength);
+			double progress = (sim[i].step / (double) sim[i].param.nSteps + i) / paramRangeLength;
+			System.out.format("Simulation progress: %1.4f", progress);
 			long elapsed = System.currentTimeMillis() - startTime;
 			long ETA = (long) (elapsed * (1 / progress - 1));
 
@@ -512,5 +551,4 @@ public class simulationRunner {
 		file.createNewFile();
 		return file;
 	}
-
 }

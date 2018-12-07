@@ -1,16 +1,10 @@
 package main;
 
 import java.io.*;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.*;
 
-import java.util.logging.*;
-
-import constants.BasisState;
-import constants.Crystal;
-import constants.Element;
+import constants.*;
 
 public class Simulator implements Runnable {
 
@@ -86,8 +80,6 @@ public class Simulator implements Runnable {
 	
 	private MyVector mid;
 	public File outputFile;
-	
-	private static final String defaultDir = "C:\\Users\\anders\\Documents\\11_Semester\\Speciale\\Data\\";
 	
 	private double delta;
 	public int nRejects = 0;
@@ -438,7 +430,7 @@ public class Simulator implements Runnable {
 
 	private double calcCouplingEnergy(int[] indexA) {
 		double E = 0;
-		MyVector S = getSpinDirection(indexA);
+		MyVector spinA = getSpinDirection(indexA).mult(getAtom(indexA).spin);
 		Element atomA = getAtom(indexA);
 
 		int[][][] allNeighbours = crys.getNNIndices().clone();
@@ -449,7 +441,8 @@ public class Simulator implements Runnable {
 				int[] spec_J_nb = nb_with_specific_J[n];
 				int[] indexB = normIndex(addIndex(indexA, spec_J_nb));
 				Element atomB = getAtom(indexB);
-				E += atomA.getCoupling(atomB, nJ) * S.dot(getSpinDirection(indexB))/2;
+				MyVector spinB = getSpinDirection(indexB).mult(getAtom(indexB).spin);
+				E += atomA.getCoupling(atomB, nJ) * spinA.dot(spinB)/2;
 			}
 		}
 		return E;
@@ -457,7 +450,7 @@ public class Simulator implements Runnable {
 
 	private double calcFieldEnergy(int[] index) {
 		MyVector S = getSpinDirection(index).mult(getAtom(index).spin); //Spin vector S
-		double E = -g * muB * S.dot(param.H);
+		double E = -g * muB * S.dot(param.B);
 		return E;
 	}
 	
