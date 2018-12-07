@@ -136,7 +136,7 @@ public class Visualizer extends PApplet {
 			translate((float)pos.x, (float)pos.y, (float)pos.z);
 	
 			// Draws box
-			cuboid(master.a * master.scaling, master.b * master.scaling, master.c * master.scaling);
+			cuboid((float) (master.a * master.scaling), (float) (master.b * master.scaling), (float) (master.c * master.scaling));
 	
 			popMatrix();
 			popStyle();

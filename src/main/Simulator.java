@@ -17,14 +17,16 @@ public class Simulator implements Runnable {
 	 */
 	private static final String PREC = "%1.8e";
 	
-	public static final float a = 10.02f;
-	public static final float b = 5.86f;
-	public static final float c = 4.68f;
+	public static final double a = 10.02f;
+	public static final double b = 5.86f;
+	public static final double c = 4.68f;
 	public static final float scaling = 1;
 
 	private static final double invBoltz = 11.6045; // inverse of the Boltzmann constant in units K / meV
-	private static final double muB = 0.05788381751; // mu_B the Bohr_magneton in units meV/T
-	private static final double g = 2; // the gyromagnetic factor of the electron
+	private static final double muB = 0.05788382; // mu_B the Bohr_magneton in units meV/T
+	private static final double gx = 2; // the g-factor of the electron
+	private static final double gy = 2; // the g-factor of the electron
+	private static final double gz = 2; // the g-factor of the electron
 	public Crystal crys = Crystal.FCC;
 	public MyVector[] basis = crys.get();
 	public int nBasis = basis.length; 
@@ -450,7 +452,8 @@ public class Simulator implements Runnable {
 
 	private double calcFieldEnergy(int[] index) {
 		MyVector S = getSpinDirection(index).mult(getAtom(index).spin); //Spin vector S
-		double E = -g * muB * S.dot(param.B);
+		MyVector mu = scaleVec(muB*gx, muB*gy, muB*gz, S);
+		double E = -mu.dot(param.B);
 		return E;
 	}
 	
@@ -616,8 +619,8 @@ public class Simulator implements Runnable {
 	/**
 	 * Scales the vector by the diagonal matrix diag(a,b,c)
 	 */
-	public MyVector scaleVec(float a, float b, float c, MyVector vec) {
-		return new MyVector(a * vec.x, b * vec.y, c * vec.z);
+	public MyVector scaleVec(double phiX, double phiY2, double phiZ, MyVector vec) {
+		return new MyVector(phiX * vec.x, phiY2 * vec.y, phiZ * vec.z);
 	}
 
 	/* Indexing */
