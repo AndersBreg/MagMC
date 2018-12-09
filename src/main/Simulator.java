@@ -45,7 +45,7 @@ public class Simulator implements Runnable {
 	// Output values
 	public double energySingle;
 	private double energyTotal;
-	
+
 	private double energy_Sum = 0;
 	private double energy_SumSq = 0;
 	
@@ -385,7 +385,7 @@ public class Simulator implements Runnable {
 		
 		// Create a new sample / make a small change / proposal spin:
 		setSpinDirection(index, markovSurface(getSpinDirection(index)));
-
+		
 		// Calculate energy and other values with new vector:
 		double newEnergy = calcAtomEnergy(index);
 		

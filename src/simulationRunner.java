@@ -38,7 +38,7 @@ public class simulationRunner {
 
 	public static void main(String[] args) throws InterruptedException, IOException {
 
-		parentDir = new File(args[0]);
+		parentDir = new File(".."+sep);
 		defaultDataDir = new File(parentDir, "Data");
 		curDir = new File(defaultDataDir.getAbsolutePath());
 		
@@ -48,7 +48,7 @@ public class simulationRunner {
 		
 		while (in.hasNext()) {
 			String line = in.nextLine();
-			System.out.println(line);
+			System.out.println("Executing command: " + line);
 			String[] lineArgs = line.split(" ");
 			if (lineArgs.length < 1)
 				break;
@@ -156,10 +156,15 @@ public class simulationRunner {
 			case "disableConfigFile":
 				useConfig = false;
 				break;
-			case "toggleVis":
-			case "toggleVisualizer":
-			case "toggleVisualiser":
-				visualizing = !visualizing;
+			case "disableVis":
+			case "disableVisualizer":
+			case "disableVisualiser":
+				visualizing = false;
+				break;
+			case "enableVis":
+			case "enableVisualizer":
+			case "enableVisualiser":
+				visualizing = true;
 				break;
 			case "runSim":
 				System.out.println("Running simulations: ");
@@ -255,8 +260,8 @@ public class simulationRunner {
 			}
 			double tStart = Double.parseDouble(args[1]);
 			double dT = Double.parseDouble(args[2]);
-			double tEnd = Integer.parseInt(args[3]);
-			int nT = (int) ((tEnd - tStart)/dT); 
+			double tEnd = Double.parseDouble(args[3]);
+			int nT = 1 + (int) ((tEnd - tStart)/dT); 
 
 			Parameters[] paramRange = new Parameters[nT];
 			for (int n = 0; n < nT; n++) {
@@ -284,8 +289,8 @@ public class simulationRunner {
 			}
 			double hStart = Double.parseDouble(args[1]);
 			double dH = Double.parseDouble(args[2]);
-			double hEnd = Integer.parseInt(args[3]);
-			int nH = (int) ((hEnd - hStart)/dH);
+			double hEnd = Double.parseDouble(args[3]);
+			int nH = 1+(int) ((hEnd - hStart)/dH);
 			
 			Parameters[] paramRange = new Parameters[nH];
 			for (int n = 0; n < nH; n++) {
@@ -314,9 +319,9 @@ public class simulationRunner {
 			
 			double angStart = Double.parseDouble(args[1]);
 			double dAng = Double.parseDouble(args[2]);
-			double angEnd = Integer.parseInt(args[3]);
+			double angEnd = Double.parseDouble(args[3]);
 			double field = Double.parseDouble(args[4]);
-			int nAng = (int) ((angEnd - angStart)/dAng);
+			int nAng = 1 + (int) ((angEnd - angStart)/dAng);
 			
 			Parameters[] paramRange = new Parameters[nAng];
 			for (int n = 0; n < nAng; n++) {
@@ -347,12 +352,12 @@ public class simulationRunner {
 			double tStart = Double.parseDouble(args[1]);
 			double dT = Double.parseDouble(args[2]);
 			double tEnd = Double.parseDouble(args[3]);
-			int nT = (int) ((tEnd - tStart)/dT);
+			int nT = 1 + (int) ((tEnd - tStart)/dT);
 	
 			double hStart = Double.parseDouble(args[4]);
 			double dH = Double.parseDouble(args[5]);
 			double hEnd = Double.parseDouble(args[6]);
-			int nH = (int) ((hEnd - hStart)/dH);
+			int nH = 1 + (int) ((hEnd - hStart)/dH);
 			
 			Parameters[] paramRange = new Parameters[nT*nH];
 			for (int t = 0; t < nT; t++) {
