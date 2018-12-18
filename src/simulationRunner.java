@@ -1,11 +1,16 @@
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
@@ -30,6 +35,7 @@ public class simulationRunner {
 	private static boolean saveConfig = false;
 
 	private static boolean visualizing = false;
+	private static boolean[] simToVisualize;
 	private static Visualizer vis;
 	private static Simulator[] sim;
 	private static Thread[] threads;
@@ -122,6 +128,8 @@ public class simulationRunner {
 				
 			case "loadConfigFile":
 			case "loadConfFile":
+			case "loadConfig":
+			case "loadConf":
 				if (!lineArgs[1].endsWith(".txt")) {
 					lineArgs[1] = lineArgs[1]+".txt";
 				}
@@ -139,6 +147,7 @@ public class simulationRunner {
 //					System.out.println(string);
 //				}
 				break;
+			case "saveConf":
 			case "saveConfig":
 			case "saveConfigFile":
 			case "saveConfigCopy":
@@ -146,8 +155,11 @@ public class simulationRunner {
 					lineArgs[1] = lineArgs[1]+".txt";
 				}
 				Path p = Paths.get(curDir.toString(), lineArgs[1]);
+				System.out.println("Saves current configuration to:" + p.toString());
 				Files.copy(configFile.toPath(), p, StandardCopyOption.REPLACE_EXISTING );
+				configFile = p.toFile();
 				break;
+			case "enableConf":
 			case "enableConfFile":
 			case "enableConfigFile":
 				useConfig = true;
@@ -165,6 +177,14 @@ public class simulationRunner {
 			case "enableVisualizer":
 			case "enableVisualiser":
 				visualizing = true;
+				simToVisualize = new boolean[paramRange.length];
+				if (lineArgs.length > 1) {
+					for (int index = 1; index < lineArgs.length; index++) {
+						simToVisualize[Integer.parseInt(lineArgs[index])] = true;
+					}
+				} else {
+					simToVisualize[0] = true;
+				}
 				break;
 			case "runSim":
 				System.out.println("Running simulations: ");
@@ -173,6 +193,11 @@ public class simulationRunner {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
+				break;
+			case "modifyElement":
+			case "modifyElem":
+			case "modify":
+				modifyElement(lineArgs);
 				break;
 			case "help":
 			case "h":
@@ -191,6 +216,17 @@ public class simulationRunner {
 		}
 		in.close();
 		System.exit(0);
+	}
+	
+	private static void modifyElement(String[] args) {
+		String elemString = args[1];
+		Element elem = Element.valueOf(elemString);
+		int parameter = Integer.parseInt(args[2]);
+		double value = Double.parseDouble(args[3]);
+		System.out.println("Changed element: " + elem);
+		System.out.println("Old parameters: " + elem.paramString());
+		elem.modify(parameter, value);
+		System.out.println("New parameters: " + elem.paramString());
 	}
 
 	private static void printParam(Parameters[] paramRange) {
@@ -413,58 +449,59 @@ public class simulationRunner {
 	}
 	
 	private static void writeHelp() {
-//		try {
-//			Scanner sc = new Scanner(new File("help.txt"));
-//			while (sc.hasNextLine()) {
-//				String string = (String) sc.nextLine();
-//				System.out.println(string);
-//			}
-//			sc.close();
-//		} catch (FileNotFoundException e) {
-//			e.printStackTrace();
-//		}
-		System.out.println("sim.jar.\r\n" + 
-				"	list of commands:\r\n" + 
-				"	\r\n" + 
-				"	\r\n" + 
-				"		-help, 			Writes this text.\r\n" + 
-				"\r\n" + 
-				"		-setCommon 		Sets the common parameters for the simulations\r\n" +
-				"			Format:		nSteps nAggre nx ny nz Elem [ Base_State ]\r\n" + 
-				"\r\n" +
-				"		-scanT			Makes a scan ramping up or down the temp field.\r\n" + 
-				"			Arguments after the command should be in the format:\r\n" + 
-				"				outputLoc, nX, nY, nZ, T_start, dT, nT, Hx, Hy, Hz\r\n" + 
-				"\r\n" + 
-				"		-scanHx			Makes a scan ramping up or down the Hx field.\r\n" + 
-				"			Arguments after the command should be in the format:\r\n" + 
-				"				outputLoc, nX, nY, nZ, Hx_start, dHx, nHx, temp, Hy, Hz\r\n" + 
-				"\r\n" + 
-				"		-scanHy\r\n" + 
-				"			Makes a scan ramping up or down the Hy field.\r\n" + 
-				"			Arguments after the command should be in the format:\r\n" + 
-				"				outputLoc, nX, nY, nZ, Hy_start, dHz, nHy, temp, Hx, Hz\r\n" + 
-				"		\r\n" + 
-				"		-scanH\r\n" + 
-				"			Makes a scan ramping up or down the Hz field.\r\n" + 
-				"			Arguments after the command should be in the format:\r\n" + 
-				"				outputLoc, nX, nY, nZ, Hz_start, dHz, nHz, temp, Hx, Hy\r\n" + 
-				"\r\n" + 
-				"		-scanTHx\r\n" + 
-				"			Makes a scan ramping up or down the Hz field.\r\n" + 
-				"			Arguments after the command should be in the format:\r\n" + 
-				"				outputLoc, nX, nY, nZ, Hx_start, dHx, nHx, T_start, dT, nT, Hy, Hz\r\n" + 
-				"\r\n" + 
-				"		-scanTHy\r\n" + 
-				"			Makes a scan ramping up or down the Hz field. \r\n" + 
-				"			Arguments after the command should be in the format:\r\n" + 
-				"				outputLoc, nX, nY, nZ, Hy_start, dH, nHy, T_start, dT, nT, Hx, Hz\r\n" + 
-				"					\r\n" + 
-				"		-scanTHz\r\n" + 
-				"			Makes a scan ramping up or down the Hz field. \r\n" + 
-				"			Arguments after the command should be in the format:\r\n" + 
-				"				outputLoc, nX, nY, nZ, Hz_start, dHz, nHz, T_start, dT, nT, Hx, Hy\r\n" + 
-				"					");
+		try {
+			Path location = Paths.get(parentDir.toString(), "MCMC_Code", "help.txt");
+			Scanner sc = new Scanner( location.toFile() );
+			while (sc.hasNextLine()) {
+				String string = (String) sc.nextLine();
+				System.out.println(string);
+			}
+			sc.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+//		System.out.println("sim.jar.\r\n" + 
+//				"	list of commands:\r\n" + 
+//				"	\r\n" + 
+//				"	\r\n" + 
+//				"		-help, 			Writes this text.\r\n" + 
+//				"\r\n" + 
+//				"		-setCommon 		Sets the common parameters for the simulations\r\n" +
+//				"			Format:		nSteps nAggre nx ny nz Elem [ Base_State ]\r\n" + 
+//				"\r\n" +
+//				"		-scanT			Makes a scan ramping up or down the temp field.\r\n" + 
+//				"			Arguments after the command should be in the format:\r\n" + 
+//				"				outputLoc, nX, nY, nZ, T_start, dT, nT, Hx, Hy, Hz\r\n" + 
+//				"\r\n" + 
+//				"		-scanHx			Makes a scan ramping up or down the Hx field.\r\n" + 
+//				"			Arguments after the command should be in the format:\r\n" + 
+//				"				outputLoc, nX, nY, nZ, Hx_start, dHx, nHx, temp, Hy, Hz\r\n" + 
+//				"\r\n" + 
+//				"		-scanHy\r\n" + 
+//				"			Makes a scan ramping up or down the Hy field.\r\n" + 
+//				"			Arguments after the command should be in the format:\r\n" + 
+//				"				outputLoc, nX, nY, nZ, Hy_start, dHz, nHy, temp, Hx, Hz\r\n" + 
+//				"		\r\n" + 
+//				"		-scanH\r\n" + 
+//				"			Makes a scan ramping up or down the Hz field.\r\n" + 
+//				"			Arguments after the command should be in the format:\r\n" + 
+//				"				outputLoc, nX, nY, nZ, Hz_start, dHz, nHz, temp, Hx, Hy\r\n" + 
+//				"\r\n" + 
+//				"		-scanTHx\r\n" + 
+//				"			Makes a scan ramping up or down the Hz field.\r\n" + 
+//				"			Arguments after the command should be in the format:\r\n" + 
+//				"				outputLoc, nX, nY, nZ, Hx_start, dHx, nHx, T_start, dT, nT, Hy, Hz\r\n" + 
+//				"\r\n" + 
+//				"		-scanTHy\r\n" + 
+//				"			Makes a scan ramping up or down the Hz field. \r\n" + 
+//				"			Arguments after the command should be in the format:\r\n" + 
+//				"				outputLoc, nX, nY, nZ, Hy_start, dH, nHy, T_start, dT, nT, Hx, Hz\r\n" + 
+//				"					\r\n" + 
+//				"		-scanTHz\r\n" + 
+//				"			Makes a scan ramping up or down the Hz field. \r\n" + 
+//				"			Arguments after the command should be in the format:\r\n" + 
+//				"				outputLoc, nX, nY, nZ, Hz_start, dHz, nHz, T_start, dT, nT, Hx, Hy\r\n" + 
+//				"					");
 	}
 
 	private static void runSequential(Parameters[] paramRange, long startTime)
@@ -492,7 +529,7 @@ public class simulationRunner {
 			threads[i] = new Thread(sim[i]);
 
 			threads[i].start();
-			if (visualizing) {
+			if (visualizing && simToVisualize[i] == true) {
 				int vIndex = i;
 				vis = new Visualizer(sim[vIndex]);
 				if (i == 0) {
@@ -519,14 +556,14 @@ public class simulationRunner {
 
 		for (int i = 0; i < paramRange.length; i++) {
 			File file = findFilename(curDir, name);
-			if (configFile.exists()) {
+			if (useConfig && configFile != null && configFile.exists()) {
 				sim[i] = new Simulator(paramRange[i], file, configFile);
 			} else {
 				sim[i] = new Simulator(paramRange[i], file);
 			}
 			if (paramRange[i].initState != null) {
 				sim[i].configFromBasisState(paramRange[i].initState); // Forces a basis configuration onto
-				// the state	
+				// the state
 			}
 			threads[i] = new Thread(sim[i]);
 			threads[i].start();
@@ -575,7 +612,7 @@ public class simulationRunner {
 			Thread.sleep(2000);
 		}
 	}
-	
+
 	private static String formatTime(long ETA) {
 		return String.format("%d min, %d sec", TimeUnit.MILLISECONDS.toMinutes(ETA),
 				TimeUnit.MILLISECONDS.toSeconds(ETA)
@@ -586,8 +623,10 @@ public class simulationRunner {
 		System.out.println("Prints additional data to path: " + logFile.getAbsolutePath());
 		try {
 			FileWriter writer = new FileWriter(logFile, true);
-			writer.write("File:" + sim.outputFile.getName() + " has rejection ratio "
-					+ ((double) sim.nRejects / (double) sim.param.nSteps) + " and time taken " + timeTaken + "\n");
+			String date = (new SimpleDateFormat("MM/dd HH:mm:ss")).format(new Date());
+			writer.write("Time and date: " + date);
+			writer.write(" File:" + sim.outputFile.getName());
+			writer.write(" Rejection ratio " + ((double) sim.nRejects / (double) sim.param.nSteps) + "\n");
 			writer.close();
 		} catch (IOException e) {
 			System.err.println("Caught Exception: " + e.getMessage());

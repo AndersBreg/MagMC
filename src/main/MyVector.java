@@ -1,7 +1,5 @@
 package main;
 
-import java.nio.file.Path;
-
 public final class MyVector {
 	public double x;
 	public double y;
