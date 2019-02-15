@@ -1,39 +1,15 @@
 package constants;
 
 import main.MyVector;
+import math.Complex;
 
-public enum BasisState {
-
-	// Commensurate basis structures:
-	/*
-	public static final MyVector[] Ax = new MyVector[] { 
-			new MyVector(1.0f, 0.0f, 0.0f), new MyVector(1.0f, 0.0f, 0.0f),
-			new MyVector(-1.0f, 0.0f, 0.0f), new MyVector(-1.0f, 0.0f, 0.0f) };
-	public static final MyVector[] Cx = new MyVector[] { 
-			new MyVector(1.0f, 0.0f, 0.0f), new MyVector(-1.0f, 0.0f, 0.0f),
-			new MyVector(1.0f, 0.0f, 0.0f), new MyVector(-1.0f, 0.0f, 0.0f) };
-	public static final MyVector[] Gx = new MyVector[] { 
-			new MyVector(1.0f, 0.0f, 0.0f), new MyVector(-1.0f, 0.0f, 0.0f),
-			new MyVector(-1.0f, 0.0f, 0.0f), new MyVector(1.0f, 0.0f, 0.0f) };
-	public static final MyVector[] Fx = new MyVector[] { 
-			new MyVector(1.0f, 0.0f, 0.0f), new MyVector(1.0f, 0.0f, 0.0f),
-			new MyVector(1.0f, 0.0f, 0.0f), new MyVector(1.0f, 0.0f, 0.0f) };
+public enum BasisStateIncom {
 	
-	public static final MyVector[] Ay = permute(Ax);
-	public static final MyVector[] Cy = permute(Cx);
-	public static final MyVector[] Gy = permute(Gx);
-	public static final MyVector[] Fy = permute(Fx);
-
-	public static final MyVector[] Az = permute(Ay);
-	public static final MyVector[] Cz = permute(Cy);
-	public static final MyVector[] Gz = permute(Gy);
-	public static final MyVector[] Fz = permute(Fy);
-	*/
-
-	Ax ( new int[] {1, 1, -1, -1}, 0),
-	Cx ( new int[] {1, -1, 1, -1}, 0),
-	Gx ( new int[] {1, -1, -1, 1}, 0),
-	Fx ( new int[] {1, 1, 1, 1}, 0),
+	
+	Ax ( new double[] {0, 0, 1, 1}, 0),
+	Cx ( new double[] {0, 1, 0, 1}, 0),
+	Gx ( new double[] {0, 1, 1, 0}, 0),
+	Fx ( new double[] {0, 0, 0, 0}, 0),
 	
 	Ay (Ax),
 	Cy (Cx),
@@ -45,15 +21,15 @@ public enum BasisState {
 	Gz (Gy),
 	Fz (Fy);
 	
-	public final int[][][] basisSpins;
+	public final double[][][] basisSpins;
 	public final int coord;
 	
 	private final static int[][] indices = new int[][] {
 		{0,0,0},{0,1,1},{1,0,1},{1,1,0}
 	};
 
-	private int[] asList() {
-		int[] newSpins = new int[4];
+	private double[] asList() {
+		double[] newSpins = new double[4];
 		for (int i = 0; i < indices.length; i++) {
 			int[] index = indices[i];
 			newSpins[i] = basisSpins[index[0]][index[1]][index[2]];
@@ -63,16 +39,16 @@ public enum BasisState {
 //		return new MyVector[] { basisSpins[0][0][0], basisSpins[0][1][1], basisSpins[1][0][1], basisSpins[1][1][0] };
 	}
 	
-	public int index(int i) {
+	public double index(int i) {
 		return this.asList()[i];
 	}
 	
-	public int getSpin(int[] index) {
+	public double getSpin(int[] index) {
 		int[] localIndex = norm(index);
 		return basisSpins[localIndex[0]][localIndex[1]][localIndex[2]];
 	}
 	
-	public static BasisState getState(int state, int coord) {
+	public static BasisStateIncom getState(int state, int coord) {
 		switch(state) {
 		case 0:
 			switch(coord) {
@@ -114,23 +90,32 @@ public enum BasisState {
 		throw new ArrayIndexOutOfBoundsException("The given base state does not exist.");
 	}
 
-	private BasisState(int[] spins, int coord) {
-		basisSpins = new int[2][2][2];
+	private BasisStateIncom(double[] spins, int coord) {
+		basisSpins = new double[2][2][2];
 		basisSpins[0][0][0] = spins[0];
 		basisSpins[0][1][1] = spins[1];
 		basisSpins[1][0][1] = spins[2];
 		basisSpins[1][1][0] = spins[3];
 		this.coord = coord;
 	}
-	
-	private BasisState(BasisState p) {
+
+	private BasisStateIncom(BasisStateIncom p) {
 		this.basisSpins = p.basisSpins;
 		this.coord = (p.coord+1) % 3;
 	}
 	
 	public double projOnBasis(int[] index, MyVector spin) {
+		// TODO Check these for correctness
 		int[] newIndex = norm(index);
-		return spin.getCoord(this.coord)*getSpin(newIndex);
+		double factor = (Complex.exp(new Complex(0, Math.PI * this.getSpin(newIndex)))).re;
+		return factor*spin.getCoord(this.coord);
+	}
+	
+	public Complex projOnBasisIncom(int[] index, MyVector spin, double deltaK) {
+		// TODO Check these for correctness
+		int[] newIndex = norm(index);
+		Complex factor = Complex.exp(new Complex(0, Math.PI * (this.getSpin(newIndex) + deltaK)));
+		return factor.mult(spin.getCoord(this.coord));
 	}
 
 	public static int[] norm(int[] index) {

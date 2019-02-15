@@ -11,5 +11,6 @@
 	<classpathentry kind="lib" path="src/jogl-all.jar"/>
 	<classpathentry kind="lib" path="C:/Users/anders/Documents/Processing/libraries/peasycam/library/peasycam.jar"/>
 	<classpathentry kind="lib" path="C:/Users/anders/Documents/Processing/libraries/peasycam/library/peasy-math.jar"/>
+	<classpathentry kind="src" path="/Utilities"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

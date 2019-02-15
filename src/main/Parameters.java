@@ -8,16 +8,10 @@ import constants.*;
 public class Parameters {
 
 	/** Number of steps aggregation and cell dimensions */
-	public int nSteps;
-	public int aggregate;
+	public long nSteps;
 	public int nX = 1;
 	public int nY = 1;
 	public int nZ = 1;
-
-	public double temp;
-
-	/** Applied H-field */
-	public MyVector B = new MyVector(0, 0, 0);
 
 	public Element baseElem = null;
 	public BasisState initState = null;
@@ -26,28 +20,16 @@ public class Parameters {
 	public Config initial;
 
 	/** Standard number of parameters. */
-	public static final int nIntParam = 5;
-	public static final int nFloatParam = 4;
+	public static final int nIntParam = 4;
 	public static final int nBoolParam = 0;
 
-//	/** Filename and file extension type. */
-//	public String filename;
-//	public String extension;
-//	public String dir;
-
-	// Boolean options:
-//	private boolean perBoundsX = true;
-//	private boolean perBoundsY = true;
-//	private boolean perBoundsZ = true;
-
-	private static final String[] paramNames = { "#Steps", "Aggregate", "nX", "nY", "nZ", "Temperature", "Hx", "Hy", "Hz"};
+	public static final String[] paramNames = { "MonteCarloSteps", "nX", "nY", "nZ"};
 
 	/**
 	 * Initialize with parameters: arrI: #steps, nX, nY, nZ arrF: temperature, Hx, Hy, Hz \n
 	 */
-	public Parameters(final int[] arrI, final double[] arrF) {
-		if (arrI.length != nIntParam || arrF.length != nFloatParam) {
-			String[] paramNames = getNames();
+	public Parameters(final long[] ls) {
+		if (ls.length != nIntParam) {
 			String st = new String("");
 			for (int i = 0; i < paramNames.length; i++) {
 				st = st.concat(paramNames[i] + ", ");
@@ -55,15 +37,10 @@ public class Parameters {
 			throw new IndexOutOfBoundsException("Not the right amount of parameters\n" + st);
 		}
 
-		nX = arrI[2];
-		nY = arrI[3];
-		nZ = arrI[4];
-		nSteps = arrI[0]*nX*nY*nZ*4;
-		aggregate = arrI[1]*nX*nY*nZ*4;
-		
-		temp = arrF[0];
-		
-		B = new MyVector(arrF[1], arrF[2], arrF[3]);
+		nX = (int) ls[1];
+		nY = (int) ls[2];
+		nZ = (int) ls[3];
+		nSteps = ls[0]*nX*nY*nZ*4;
 	}
 	
 	public Parameters() {
@@ -71,40 +48,26 @@ public class Parameters {
 	}
 
 	public Parameters clone() {
-		Parameters param = new Parameters(new int[] {nSteps, aggregate, nX, nY, nZ}, new double[] {temp, B.x, B.y, B.z});
+		Parameters param = new Parameters(new long[] {nSteps, nX, nY, nZ});
 		param.baseElem = this.baseElem;
 		return param;
 	}
 	
-	public static String[] getNames() {
-		return paramNames;
+	public long[] getValues() {
+		return new long[] { nSteps/(nX*nY*nZ*4), nX, nY, nZ};
 	}
 
-	public double[] asList() {
-		return new double[] { nSteps, aggregate, nX, nY, nZ, temp, B.x, B.y, B.z};
-	}
-
-	private String getParam(int i) {
+	public String getParam(int i) {
 		switch (i) {
 		case (0):
-			return Integer.toString(nSteps);
+			return Long.toString(nSteps/(nX*nY*nZ*4));
 		case (1):
-			return Integer.toString(aggregate);
-		case (2):
 			return Integer.toString(nX);
-		case (3):
+		case (2):
 			return Integer.toString(nY);
-		case (4):
+		case (3):
 			return Integer.toString(nZ);
-		case (5):
-			return Double.toString(temp);
-		case (6):
-			return Double.toString(B.x);
-		case (7):
-			return Double.toString(B.y);
-		case (8):
-			return Double.toString(B.z);
-		case (9):
+		case (4):
 			return baseElem.toString();
 		default:
 			return "";
@@ -114,8 +77,13 @@ public class Parameters {
 	public String toString() {
 		String S = new String();
 		for (int i = 0; i < paramNames.length; i++) {
-			S += paramNames[i] + ": " + getParam(i) + ", ";
+			S += paramNames[i] + ", ";
 		}
+		S += "\r\n";
+		for (int i = 0; i < paramNames.length; i++) {
+			S += getParam(i) +", ";
+		}
+		S += "\r\n";
 		return S;
 	}
 
@@ -127,19 +95,14 @@ public class Parameters {
 		File file = Paths.get(dir, filename + ".txt").toFile();
 		BufferedReader in = new BufferedReader(new FileReader(file));
 		
-		int[] intParam = new int[Parameters.nIntParam];
-		double[] floatParam = new double[Parameters.nFloatParam];
+		long[] intParam = new long[Parameters.nIntParam];
 		
 		for (int i = 0; i < intParam.length; i++) {
 			String s = in.readLine();
 			intParam[i] = Integer.parseInt(s);
 		}
 		
-		for (int i = 0; i < intParam.length; i++) {
-			String s = in.readLine();
-			floatParam[i] = Double.parseDouble(s);			
-		}
 		in.close();
-		return new Parameters(intParam, floatParam);
+		return new Parameters(intParam);
 	}
 }
