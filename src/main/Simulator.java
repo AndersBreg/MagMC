@@ -292,8 +292,8 @@ public class Simulator implements Runnable {
 		double[][] projOld = allProjectionsSingle(index);
 
 		// Create a new sample / make a small change / proposal spin:
-		setSpinDirection(index, markovSurface(getSpinDirection(index)));
-//		setSpinDirection(index, randomTurn(getSpinDirection(index)));
+//		setSpinDirection(index, markovSurface(getSpinDirection(index)));
+		setSpinDirection(index, randomTurn(getSpinDirection(index)));
 //		setSpinDirection(index, randomVector());
 
 		// Calculate energy and other values with new vector:
