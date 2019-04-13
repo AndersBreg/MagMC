@@ -53,9 +53,11 @@ public class Simulator implements Runnable {
 
 	private double energy_Sum = 0;
 	private double energy_SumSq = 0;
+	private double energy_SumQuad = 0;
 	private double[][] curBaseProj = new double[4][3];
 	private double[][] baseProj_Sum = new double[4][3];
 	private double[][] baseProj_SumSq = new double[4][3];
+	private double[][] baseProj_SumQuad = new double[4][3];
 
 	private ArrayList<Double> energyMeans;
 	private ArrayList<Double[][]> baseProjMeans;
@@ -227,25 +229,31 @@ public class Simulator implements Runnable {
 	private void flush(PrintStream out, Variables vars) {
 		double energy_Mean = energy_Sum / param.nSteps;
 		double energy_Var = (energy_SumSq / param.nSteps - energy_Mean * energy_Mean);
+		double energy_Quad = (energy_SumQuad / param.nSteps);
 
 		double[][] baseProj_Mean = new double[4][3];
 		double[][] baseProj_Var = new double[4][3];
+		double[][] baseProj_Quad = new double[4][3];
 		for (int state = 0; state < 4; state++) {
 			for (int coord = 0; coord < 3; coord++) {
 				baseProj_Mean[state][coord] = baseProj_Sum[state][coord] / param.nSteps;
 				baseProj_Var[state][coord] = (baseProj_SumSq[state][coord] / param.nSteps
 						- baseProj_Mean[state][coord] * baseProj_Mean[state][coord]);
+				baseProj_Quad[state][coord] = baseProj_SumQuad[state][coord] / param.nSteps;
 			}
 		}
 
+		// TODO Should also print quadratic moments energy_Quad and baseProj_Quad
 		printVals(out, vars, energy_Mean, energy_Var, baseProj_Mean, baseProj_Var, nReject, nAccept);
 
 		energy_Sum = 0;
 		energy_SumSq = 0;
+		energy_SumQuad = 0;
 		for (int state = 0; state < 4; state++) {
 			for (int coord = 0; coord < 3; coord++) {
 				baseProj_Sum[state][coord] = 0;
 				baseProj_SumSq[state][coord] = 0;
+				baseProj_SumQuad[state][coord] = 0;
 			}
 		}
 	}
@@ -414,6 +422,7 @@ public class Simulator implements Runnable {
 	private void updateBaseProj(double[][] projOld, double[][] projNew) {
 		energy_Sum += currentEnergySingle / nAtoms;
 		energy_SumSq += currentEnergySingle * currentEnergySingle / (nAtoms * nAtoms);
+		energy_SumQuad += Math.pow(currentEnergySingle / nAtoms, 4);
 
 		for (int state = 0; state < 4; state++) {
 			for (int coord = 0; coord < 3; coord++) {
@@ -421,6 +430,7 @@ public class Simulator implements Runnable {
 				curBaseProj[state][coord] = curBaseProj[state][coord] + diff;
 				baseProj_Sum[state][coord] += curBaseProj[state][coord];
 				baseProj_SumSq[state][coord] += curBaseProj[state][coord] * curBaseProj[state][coord];
+				baseProj_SumQuad[state][coord] += Math.pow(curBaseProj[state][coord], 4);
 			}
 		}
 		// double fX = projBasisStateTotal(Crystal.Fx); // Alternative use
