@@ -318,6 +318,15 @@ public class simulationRunner {
 			System.out.println(iterator.next());
 		}
 	}
+	
+	private static void setElem(String... strings) {
+		// TODO find a smart way for generating ordered placement of atoms.
+		int[] index = new int[] { //
+				Integer.valueOf(strings[1]), //
+				Integer.valueOf(strings[2]), //
+				Integer.valueOf(strings[3])};
+		sim.atomType[index[0]][index[1]][index[2]] = Element.valueOf(strings[4]);
+	}
 
 	private static void modifyElement(String[] args) {
 		String elemString = args[1];
@@ -331,7 +340,11 @@ public class simulationRunner {
 	}
 
 	private static void printParam(Parameters param) {
-		System.out.println(param.toString());
+		if(param == null) {
+			System.out.println("No common parameters set yet.");
+		} else {
+			System.out.println(param.toString());
+		}
 	}
 
 	private static void setDir(String newDirName) throws IOException {

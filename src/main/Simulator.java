@@ -53,7 +53,8 @@ public class Simulator implements Runnable {
 
 	private double energy_Sum = 0;
 	private double energy_SumSq = 0;
-	private double energy_SumQuad = 0;
+	private double energy_SumCube = 0;
+//	private double energy_SumQuad = 0;
 	private double[][] curBaseProj = new double[4][3];
 	private double[][] baseProj_Sum = new double[4][3];
 	private double[][] baseProj_SumSq = new double[4][3];
@@ -160,9 +161,11 @@ public class Simulator implements Runnable {
 		PrintStream out = new PrintStream(output);
 		printParam(out);
 		out.println("Output: ");
-		out.println("Temp, Bx, By, Bz, energy, en. var, " + "FX, FX var, FY, FY var, FZ, FZ var, "
-				+ "Cx, Cx var, Cy, Cy var, Cz, Cz var, " + "Ax, Ax var, Ay, Ay var, Az, Az var, "
-				+ "Gx, Gx var, Gy, Gy var, Gz, Gz var, rejects, accepts");
+		out.println("Temp, Bx, By, Bz, E, E_sq, " + //
+		"Fx, Fx_sq, Fx_quad, Fy, Fy_sq, Fy_quad, Fz, Fz_sq, Fz_quad, " + // 
+		"Cx, Cx_sq, Cx_quad, Cy, Cy_sq, Cy_quad, Cz, Cz_sq, Cz_quad, " + //
+		"Ax, Ax_sq, Ax_quad, Ay, Ay_sq, Ay_quad, Az, Az_sq, Az_quad, " + //
+		"Gx, Gx_sq, Gx_quad, Gy, Gy_sq, Gy_quad, Gz, Gz_sq, Gz_quad, rejects, accepts");
 
 		progress = 0;
 		
@@ -228,27 +231,27 @@ public class Simulator implements Runnable {
 
 	private void flush(PrintStream out, Variables vars) {
 		double energy_Mean = energy_Sum / param.nSteps;
-		double energy_Var = (energy_SumSq / param.nSteps - energy_Mean * energy_Mean);
-		double energy_Quad = (energy_SumQuad / param.nSteps);
+		double energy_Sq = energy_SumSq / param.nSteps;
+		double energy_Cube = energy_SumCube / param.nSteps;
+//		double energy_Quad = (energy_SumQuad / param.nSteps);
 
 		double[][] baseProj_Mean = new double[4][3];
-		double[][] baseProj_Var = new double[4][3];
+		double[][] baseProj_Sq = new double[4][3];
 		double[][] baseProj_Quad = new double[4][3];
 		for (int state = 0; state < 4; state++) {
 			for (int coord = 0; coord < 3; coord++) {
 				baseProj_Mean[state][coord] = baseProj_Sum[state][coord] / param.nSteps;
-				baseProj_Var[state][coord] = (baseProj_SumSq[state][coord] / param.nSteps
-						- baseProj_Mean[state][coord] * baseProj_Mean[state][coord]);
+				baseProj_Sq[state][coord] = baseProj_SumSq[state][coord] / param.nSteps;
 				baseProj_Quad[state][coord] = baseProj_SumQuad[state][coord] / param.nSteps;
 			}
 		}
 
-		// TODO Should also print quadratic moments energy_Quad and baseProj_Quad
-		printVals(out, vars, energy_Mean, energy_Var, baseProj_Mean, baseProj_Var, nReject, nAccept);
+		printVals(out, vars, energy_Mean, energy_Sq, baseProj_Mean, baseProj_Sq, baseProj_Quad, nReject, nAccept);
 
 		energy_Sum = 0;
 		energy_SumSq = 0;
-		energy_SumQuad = 0;
+		energy_SumCube = 0;
+//		energy_SumQuad = 0;
 		for (int state = 0; state < 4; state++) {
 			for (int coord = 0; coord < 3; coord++) {
 				baseProj_Sum[state][coord] = 0;
@@ -258,6 +261,39 @@ public class Simulator implements Runnable {
 		}
 	}
 
+	private void printVals(PrintStream out, Variables vars, double energy_Mean, double energy_Sq,
+			double[][] baseProj_Mean, double[][] baseProj_Sq, double[][] baseProj_Quad, long nReject2, long nAccept2) {
+		out.print(String.format(PREC, vars.temp));
+		out.print(", ");
+		out.print(String.format(PREC, vars.B.x));
+		out.print(", ");
+		out.print(String.format(PREC, vars.B.y));
+		out.print(", ");
+		out.print(String.format(PREC, vars.B.z));
+		out.print(", ");
+		out.print(String.format(PREC, energy_Mean));
+		out.print(", ");
+		out.print(String.format(PREC, energy_Sq));
+		out.print(", ");
+
+		for (int state = 0; state < 4; state++) {
+			for (int coord = 0; coord < 3; coord++) {
+				out.print(String.format(PREC, baseProj_Mean[state][coord]));
+				out.print(", ");
+				out.print(String.format(PREC, baseProj_Sq[state][coord]));
+				out.print(", ");
+				out.print(String.format(PREC, baseProj_Quad[state][coord]));
+				out.print(", ");
+			}
+		}
+		out.print(nReject);
+		out.print(", ");
+		out.print(nAccept);
+		out.print(", ");
+
+		out.println();		
+	}
+	
 	private void printVals(PrintStream out, Variables vars, double energy_Mean, double energy_Var,
 			double[][] baseProjMean, double[][] baseProjVar, long nReject2, long nAccept2) {
 
@@ -420,14 +456,18 @@ public class Simulator implements Runnable {
 	}
 
 	private void updateBaseProj(double[][] projOld, double[][] projNew) {
-		energy_Sum += currentEnergySingle / nAtoms;
-		energy_SumSq += currentEnergySingle * currentEnergySingle / (nAtoms * nAtoms);
-		energy_SumQuad += Math.pow(currentEnergySingle / nAtoms, 4);
+		double energyPrAtom = currentEnergySingle / nAtoms;
+		energy_Sum += energyPrAtom;
+		energy_SumSq += energyPrAtom*energyPrAtom;
+		// TODO check that the cube calculation is correct!
+		energy_SumCube += energyPrAtom*energyPrAtom*energyPrAtom;
+//		energy_SumQuad += Math.pow(currentEnergySingle / nAtoms, 4);
 
 		for (int state = 0; state < 4; state++) {
 			for (int coord = 0; coord < 3; coord++) {
 				double diff = projNew[state][coord] - projOld[state][coord];
 				curBaseProj[state][coord] = curBaseProj[state][coord] + diff;
+				// TODO Might try to take the absolute value of this instead
 				baseProj_Sum[state][coord] += curBaseProj[state][coord];
 				baseProj_SumSq[state][coord] += curBaseProj[state][coord] * curBaseProj[state][coord];
 				baseProj_SumQuad[state][coord] += Math.pow(curBaseProj[state][coord], 4);
