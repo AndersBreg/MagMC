@@ -10,11 +10,10 @@ import math.Complex;
 public class Simulator implements Runnable {
 
 	/*
-	 * Ni lat. const. = [10.02, 5.86, 4.68] Å; From Phys. Rev. 092413 (2009) 
-	 * Ni lat. const. = [10.02, 5.83, 4.66] Å; From Phys. Rev. 054408 (2011); 
-	 * Phys. Rev. 064421 (2017) and Phys. Rev. 064421 (2017) 
-	 * Co lat. const. = [10.20, 5.92, 4.70] Å; From Phys. Rev. 104420 (2017) 
-	 * Co lat. const. = [10.159, 5.9, 4.70]
+	 * Ni lat. const. = [10.02, 5.86, 4.68] Å; From Phys. Rev. 092413 (2009) Ni lat.
+	 * const. = [10.02, 5.83, 4.66] Å; From Phys. Rev. 054408 (2011); Phys. Rev.
+	 * 064421 (2017) and Phys. Rev. 064421 (2017) Co lat. const. = [10.20, 5.92,
+	 * 4.70] Å; From Phys. Rev. 104420 (2017) Co lat. const. = [10.159, 5.9, 4.70]
 	 * Å; From Phys. Rev. 104420 (2017)
 	 */
 	private static final String PREC = "%1.8e";
@@ -53,14 +52,14 @@ public class Simulator implements Runnable {
 	private double energy_Sum = 0;
 	private double energy_SumSq = 0;
 	private double energy_SumCube = 0;
-//	private double energy_SumQuad = 0;
+	// private double energy_SumQuad = 0;
 	private double[][] curBaseProj = new double[4][3];
 	private double[][] baseProj_Sum = new double[4][3];
 	private double[][] baseProj_SumSq = new double[4][3];
 	private double[][] baseProj_SumQuad = new double[4][3];
 
-//	private ArrayList<Double> energyMeans;
-//	private ArrayList<Double[][]> baseProjMeans;
+	// private ArrayList<Double> energyMeans;
+	// private ArrayList<Double[][]> baseProjMeans;
 
 	private Random rand;
 
@@ -88,9 +87,10 @@ public class Simulator implements Runnable {
 		this.periodicBoundaries = true;
 		setup();
 		output = out;
-//		System.out.println("No configuration specified, generates new.");
+		// System.out.println("No configuration specified, generates new.");
 		newConfig();
 	}
+
 	public Simulator(Parameters newParam, List<Variables> newVarList, PrintStream out, boolean periodic)
 			throws FileAlreadyExistsException {
 		this.param = newParam;
@@ -98,7 +98,7 @@ public class Simulator implements Runnable {
 		this.periodicBoundaries = periodic;
 		setup();
 		output = out;
-//		System.out.println("No configuration specified, generates new.");
+		// System.out.println("No configuration specified, generates new.");
 		newConfig();
 	}
 
@@ -111,9 +111,9 @@ public class Simulator implements Runnable {
 		output = out;
 		loadConfig(configFile);
 	}
-	
-	public Simulator(Parameters newParam, List<Variables> newVarList, PrintStream out, File configFile, boolean periodic)
-			throws IOException {
+
+	public Simulator(Parameters newParam, List<Variables> newVarList, PrintStream out, File configFile,
+			boolean periodic) throws IOException {
 		this.param = newParam;
 		this.varList = newVarList;
 		this.periodicBoundaries = periodic;
@@ -122,10 +122,10 @@ public class Simulator implements Runnable {
 		loadConfig(configFile);
 	}
 
-//	public Simulator() {
-//		this.param = new Parameters();
-//		setup();
-//	}
+	// public Simulator() {
+	// this.param = new Parameters();
+	// setup();
+	// }
 
 	public void setup() {
 		nAtoms = param.nX * param.nY * param.nZ * nBasis;
@@ -134,7 +134,7 @@ public class Simulator implements Runnable {
 		atomType = new Element[2 * param.nX][2 * param.nY][2 * param.nZ];
 		spins = new MyVector[2 * param.nX][2 * param.nY][2 * param.nZ];
 
-		if (seed != 0) {	
+		if (seed != 0) {
 			rand = new Random(seed);
 		} else {
 			rand = new Random();
@@ -161,13 +161,13 @@ public class Simulator implements Runnable {
 		printParam(out);
 		out.println("Output: ");
 		out.println("Temp, Bx, By, Bz, E, E_sq, E_cub, " + //
-		"Fx, Fx_sq, Fx_quad, Fy, Fy_sq, Fy_quad, Fz, Fz_sq, Fz_quad, " + // 
-		"Cx, Cx_sq, Cx_quad, Cy, Cy_sq, Cy_quad, Cz, Cz_sq, Cz_quad, " + //
-		"Ax, Ax_sq, Ax_quad, Ay, Ay_sq, Ay_quad, Az, Az_sq, Az_quad, " + //
-		"Gx, Gx_sq, Gx_quad, Gy, Gy_sq, Gy_quad, Gz, Gz_sq, Gz_quad, rejects, accepts");
+				"Fx, Fx_sq, Fx_quad, Fy, Fy_sq, Fy_quad, Fz, Fz_sq, Fz_quad, " + //
+				"Cx, Cx_sq, Cx_quad, Cy, Cy_sq, Cy_quad, Cz, Cz_sq, Cz_quad, " + //
+				"Ax, Ax_sq, Ax_quad, Ay, Ay_sq, Ay_quad, Az, Az_sq, Az_quad, " + //
+				"Gx, Gx_sq, Gx_quad, Gy, Gy_sq, Gy_quad, Gz, Gz_sq, Gz_quad, rejects, accepts");
 
 		progress = 0;
-		
+
 		for (Iterator<Variables> iterator = varList.iterator(); iterator.hasNext();) {
 			nReject = 0;
 			nAccept = 0;
@@ -176,20 +176,21 @@ public class Simulator implements Runnable {
 			progress += 1;
 		}
 	}
-	
+
 	private void printParam(PrintStream out) {
 		Element[] allElem = Element.values();
 		// First line prints parameter names:
-		out.println("MonteCarloSteps, nX, nY, nZ, Ni frac, Co frac, Fe frac, Mn frac, Periodic boundaries?, total steps");
-//		String[] names = Parameters.paramNames;
-//		for (int i = 0; i < names.length; i++) {
-//			out.print(names[i] + ", ");
-//		}
-//		for (int i = 0; i < allElem.length; i++) {
-//			out.print(allElem[i].toString() + " frac, ");
-//		}
-//		out.print("Periodic boundaries?");
-//		out.println();
+		out.println(
+				"MonteCarloSteps, nX, nY, nZ, Ni frac, Co frac, Fe frac, Mn frac, Periodic boundaries?, total steps");
+		// String[] names = Parameters.paramNames;
+		// for (int i = 0; i < names.length; i++) {
+		// out.print(names[i] + ", ");
+		// }
+		// for (int i = 0; i < allElem.length; i++) {
+		// out.print(allElem[i].toString() + " frac, ");
+		// }
+		// out.print("Periodic boundaries?");
+		// out.println();
 
 		// On second line prints the parameter values:
 		long[] parameters = param.getValues();
@@ -197,17 +198,17 @@ public class Simulator implements Runnable {
 			out.print(parameters[i] + ", ");
 		}
 		for (int i = 0; i < allElem.length; i++) {
-			out.print(getFraction(allElem[i])+", ");
+			out.print(getFraction(allElem[i]) + ", ");
 		}
 		out.println(periodicBoundaries + ", " + this.param.nSteps);
-		//Writes the parameters used for the different elements on the next lines:
+		// Writes the parameters used for the different elements on the next lines:
 		for (int i = 0; i < allElem.length; i++) {
 			out.println(allElem[i].toString() + " param: " + allElem[i].paramString());
 		}
 	}
 
 	private void simulate(PrintStream out, Variables vars) {
-		
+
 		curEnergySingle = calcTotalEnergy(vars);
 		curBaseProj = allProjectionsTotal();
 		nReject = 0;
@@ -218,77 +219,76 @@ public class Simulator implements Runnable {
 
 			iterate(vars);
 
-//			try {
-//				Thread.sleep(0, 0);
-//			} catch (InterruptedException e) {
-//				e.printStackTrace();
-//			}
+			// try {
+			// Thread.sleep(0, 0);
+			// } catch (InterruptedException e) {
+			// e.printStackTrace();
+			// }
 		}
 		flush(out, vars);
 	}
 
 	private void iterate(Variables vars) {
-	
-			int[] index = chooseRandomAtom(rand);
-			MyVector old = getSpinDirection(index).copy();
-	
-			// Before change
-			double oldEnergy = calcAtomEnergy(index, vars);
-			double[][] projOld = allProjectionsSingle(index);
-	
-			// Create a new sample / make a small change / proposal spin:
-	//		setSpinDirection(index, markovSurface(getSpinDirection(index)));
-			setSpinDirection(index, randomTurn(getSpinDirection(index)));
-	//		setSpinDirection(index, randomVector());
-	
-			// Calculate energy and other values with new vector:
-			double newEnergy = calcAtomEnergy(index, vars);
-	
-			double delE = newEnergy - oldEnergy;
-			double[][] diff = new double[4][3]; 
-			if (rand.nextDouble() <= Math.min(1, Math.exp(-delE * invBoltz / vars.temp))) {
-				// Find all basis state projections and the difference from the old value
-				double[][] projNew = allProjectionsSingle(index);
-				diff = arrayDiff(projNew, projOld);
-				
-				// The change has been accepted and the energy is updated
-				curEnergySingle = curEnergySingle + delE;
-				nAccept += 1;
-			} else {
-				// Reset changes
-				setSpinDirection(index, old);
-				// No need to calculate new projection, it is the same as the old..
-//				double[][] projNew = allProjectionsSingle(index);
-				nReject += 1;
-			}
-			// Save energy
-			updateEnergy(curEnergySingle);
-			// Update basis state projections
-			updateBaseProj(diff);
+
+		int[] index = chooseRandomAtom(rand);
+		MyVector old = getSpinDirection(index).copy();
+
+		// Before change
+		double oldEnergy = calcAtomEnergy(index, vars);
+		double[][] projOld = allProjectionsSingle(index);
+
+		// Create a new sample / make a small change / proposal spin:
+		// setSpinDirection(index, markovSurface(getSpinDirection(index)));
+		setSpinDirection(index, randomTurn(getSpinDirection(index)));
+		// setSpinDirection(index, randomVector());
+
+		// Calculate energy and other values with new vector:
+		double newEnergy = calcAtomEnergy(index, vars);
+
+		double delE = newEnergy - oldEnergy;
+		double[][] diff = new double[4][3];
+		if (rand.nextDouble() <= Math.min(1, Math.exp(-delE * invBoltz / vars.temp))) {
+			// Find all basis state projections and the difference from the old value
+			double[][] projNew = allProjectionsSingle(index);
+			diff = arrayDiff(projNew, projOld);
+
+			// The change has been accepted and the energy is updated
+			curEnergySingle = curEnergySingle + delE;
+			nAccept += 1;
+		} else {
+			// Reset changes
+			setSpinDirection(index, old);
+			// No need to calculate new projection, it is the same as the old..
+			// double[][] projNew = allProjectionsSingle(index);
+			nReject += 1;
 		}
+		// Save energy
+		updateEnergy(curEnergySingle);
+		// Update basis state projections
+		updateBaseProj(diff);
+	}
 
 	private void iterate2(Variables vars) {
 
 		// Choose a random atom
 		int[] indexA = chooseRandomAtom(rand);
 		int[][][] allNeighbours = crys.getNNIndices().clone();
-		
+
 		// Choose a random neighbour
 		int A = rand.nextInt(6);
 		int[] nbIndex = allNeighbours[A][rand.nextInt(allNeighbours[A].length)];
-		
+
 		int[] indexB = addIndex(indexA, nbIndex);
-		
+
 		MyVector spinA = getSpinDirection(indexA).copy();
 		MyVector spinB = getSpinDirection(indexB).copy();
-		
-		Element elemA =  getAtom(indexA);
-		Element elemB =  getAtom(indexB);
-		
+
+		Element elemA = getAtom(indexA);
+		Element elemB = getAtom(indexB);
 
 		// Before change
 		double oldEnergy = calcNeighbourEnergy(indexA, nbIndex, vars);
-		
+
 		double[][] projOldA = allProjectionsSingle(indexA);
 		double[][] projOldB = allProjectionsSingle(indexB);
 
@@ -297,12 +297,12 @@ public class Simulator implements Runnable {
 		setSpinDirection(indexB, spinA);
 		setAtom(indexA, elemB);
 		setAtom(indexB, elemA);
-		
+
 		// Calculate energy and other values with new vector:
 		double newEnergy = calcNeighbourEnergy(indexA, nbIndex, vars);
 
 		double delE = newEnergy - oldEnergy;
-		
+
 		double[][] diffA = new double[4][3];
 		double[][] diffB = new double[4][3];
 		if (rand.nextDouble() <= Math.min(1, Math.exp(-delE * invBoltz / vars.temp))) {
@@ -311,7 +311,7 @@ public class Simulator implements Runnable {
 			double[][] projNewB = allProjectionsSingle(indexB);
 			diffA = arrayDiff(projOldA, projNewA);
 			diffB = arrayDiff(projOldB, projNewB);
-			
+
 			// The change has been accepted and the energy is updated
 			curEnergySingle = curEnergySingle + delE;
 			nAccept += 1;
@@ -327,7 +327,7 @@ public class Simulator implements Runnable {
 		updateBaseProj(diffA);
 		updateBaseProj(diffB);
 	}
-	
+
 	private double[][] arrayDiff(double[][] projNew, double[][] projOld) {
 		double[][] diff = new double[4][3];
 		for (int state = 0; state < 4; state++) {
@@ -337,11 +337,12 @@ public class Simulator implements Runnable {
 		}
 		return diff;
 	}
+
 	private void flush(PrintStream out, Variables vars) {
 		double energy_Mean = energy_Sum / param.nSteps;
 		double energy_Sq = energy_SumSq / param.nSteps;
 		double energy_Cube = energy_SumCube / param.nSteps;
-//		double energy_Quad = (energy_SumQuad / param.nSteps);
+		// double energy_Quad = (energy_SumQuad / param.nSteps);
 
 		double[][] baseProj_Mean = new double[4][3];
 		double[][] baseProj_Sq = new double[4][3];
@@ -354,12 +355,13 @@ public class Simulator implements Runnable {
 			}
 		}
 
-		printVals(out, vars, energy_Mean, energy_Sq, energy_Cube, baseProj_Mean, baseProj_Sq, baseProj_Quad, nReject, nAccept);
+		printVals(out, vars, energy_Mean, energy_Sq, energy_Cube, baseProj_Mean, baseProj_Sq, baseProj_Quad, nReject,
+				nAccept);
 
 		energy_Sum = 0;
 		energy_SumSq = 0;
 		energy_SumCube = 0;
-//		energy_SumQuad = 0;
+		// energy_SumQuad = 0;
 		for (int state = 0; state < 4; state++) {
 			for (int coord = 0; coord < 3; coord++) {
 				baseProj_Sum[state][coord] = 0;
@@ -401,9 +403,9 @@ public class Simulator implements Runnable {
 		out.print(nAccept);
 		out.print(", ");
 
-		out.println();		
+		out.println();
 	}
-	
+
 	/* Energy calculations: */
 	private double calcTotalEnergy(Variables vars) {
 		double E = 0;
@@ -445,7 +447,7 @@ public class Simulator implements Runnable {
 			for (int n = 0; n < nb_with_specific_J.length; n++) {
 				int[] spec_J_nb = nb_with_specific_J[n];
 				if (periodicBoundaries || isInside(addIndex(indexA, spec_J_nb))) {
-					int[] indexB = normIndex(addIndex(indexA, spec_J_nb));				
+					int[] indexB = normIndex(addIndex(indexA, spec_J_nb));
 					Element atomB = getAtom(indexB);
 					MyVector spinB = getSpinDirection(indexB).mult(getAtom(indexB).spin);
 					E += atomA.getCoupling(atomB, nJ) * spinA.dot(spinB) / 2;
@@ -473,6 +475,7 @@ public class Simulator implements Runnable {
 
 		return E;
 	}
+
 	private boolean isInside(int[] ind) {
 		if (ind[0] < 0 || ind[1] < 0 || ind[2] < 0 || ind[0] >= (2 * param.nX) || ind[1] >= (2 * param.nY)
 				|| ind[2] >= (2 * param.nZ)) {
@@ -523,17 +526,18 @@ public class Simulator implements Runnable {
 
 	private void updateEnergy(double curEnergy) {
 		energy_Sum += curEnergy;
-		// Find out whether there should be divided with the number of atoms again. Maybe make a simpler Monte Carlo example?
+		// Find out whether there should be divided with the number of atoms again.
+		// Maybe make a simpler Monte Carlo example?
 		// Conclusion: save all the quantities in total, not pr atom. When calculating
 		// the partition function, the energy of all atoms are considered.
 		energy_SumSq += curEnergy * curEnergy;
 		energy_SumCube += curEnergy * curEnergy * curEnergy;
 		// TODO Check that the new formulas work
 	}
-	
+
 	private void updateBaseProj(double[][] diff) {
 		for (int state = 0; state < 4; state++) {
-			for (int coord = 0; coord < 3; coord++) {				
+			for (int coord = 0; coord < 3; coord++) {
 				curBaseProj[state][coord] = curBaseProj[state][coord] + diff[state][coord];
 				// TODO Might try to take the absolute value of this instead
 				baseProj_Sum[state][coord] += curBaseProj[state][coord];
@@ -590,8 +594,9 @@ public class Simulator implements Runnable {
 	// }
 
 	/* All things random */
-	/**	Method for generating a random unitvector uniformly on the unitsphere.
-	 * */
+	/**
+	 * Method for generating a random unitvector uniformly on the unitsphere.
+	 */
 	private MyVector randomVector() {
 		double X = rand.nextGaussian();
 		double Y = rand.nextGaussian();
@@ -601,8 +606,8 @@ public class Simulator implements Runnable {
 		return vec;
 	}
 
-	/** @deprecated
-	 * Generates a new vector a little different from the previous
+	/**
+	 * @deprecated Generates a new vector a little different from the previous
 	 */
 	private MyVector markovSurface(MyVector S) {
 		MyVector out;
@@ -614,16 +619,17 @@ public class Simulator implements Runnable {
 		out = MyVector.add(S, eps.mult(gamma)).normalize();
 		return out;
 	}
+
 	/**
 	 * Turns a vector in a random direction, an angle between 0 and pi.
-	 * */
+	 */
 	private MyVector randomTurn(MyVector S) {
 		MyVector out;
 		MyVector normal = randomVector();
 		double sigma = S.dot(normal);
 		normal = normal.sub(S.mult(sigma));
 		normal = normal.normalize();
-		double theta = Math.PI*rand.nextDouble();
+		double theta = Math.PI * rand.nextDouble();
 		out = S.mult(Math.cos(theta)).add(normal.mult(Math.sin(theta)));
 		return out.normalize();
 	}
@@ -651,20 +657,20 @@ public class Simulator implements Runnable {
 
 	/* Indexing */
 	public int[] normIndex(int[] ind) {
-//		if (periodicBoundaries) {
-			return new int[] { (ind[0] + 2 * param.nX) % (2 * param.nX), (ind[1] + 2 * param.nY) % (2 * param.nY),
-					(ind[2] + 2 * param.nZ) % (2 * param.nZ) };
-//		} 
-//		else {
-//			if (ind[0] < 0 || ind[1] < 0 || ind[2] < 0 || 
-//					ind[0] >= (2 * param.nX) || 
-//					ind[1] >= (2 * param.nY) || 
-//					ind[2] >= (2 * param.nZ)) {
-//				return null;
-//			} else {
-//				return ind;
-//			}
-//		}
+		// if (periodicBoundaries) {
+		return new int[] { (ind[0] + 2 * param.nX) % (2 * param.nX), (ind[1] + 2 * param.nY) % (2 * param.nY),
+				(ind[2] + 2 * param.nZ) % (2 * param.nZ) };
+		// }
+		// else {
+		// if (ind[0] < 0 || ind[1] < 0 || ind[2] < 0 ||
+		// ind[0] >= (2 * param.nX) ||
+		// ind[1] >= (2 * param.nY) ||
+		// ind[2] >= (2 * param.nZ)) {
+		// return null;
+		// } else {
+		// return ind;
+		// }
+		// }
 	}
 
 	public int[] addIndex(int[] local, int[] global) {
@@ -796,15 +802,15 @@ public class Simulator implements Runnable {
 	}
 
 	public void loadConfig(File filename) throws IOException {
-		Scanner in = new Scanner(filename);		
+		Scanner in = new Scanner(filename);
 		in.nextLine();
 		StringTokenizer paramLine = new StringTokenizer(in.nextLine(), ", ");
 		paramLine.nextToken();
 		param.nX = Integer.parseInt(paramLine.nextToken());
 		param.nY = Integer.parseInt(paramLine.nextToken());
 		param.nZ = Integer.parseInt(paramLine.nextToken());
-		while(!in.nextLine().startsWith("Config:")) {
-			
+		while (!in.nextLine().startsWith("Config:")) {
+
 		}
 		int i = 0;
 		while (in.hasNextLine()) {
@@ -831,7 +837,8 @@ public class Simulator implements Runnable {
 
 	public void saveConfig(PrintStream out) {
 
-//		System.out.println("Prints end configuration to path: " + configFile.getAbsolutePath());
+		// System.out.println("Prints end configuration to path: " +
+		// configFile.getAbsolutePath());
 		printParam(out);
 		out.println("Config:");
 		Iterator<int[]> it = iterateAtoms();
