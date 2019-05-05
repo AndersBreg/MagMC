@@ -245,21 +245,26 @@ public class Simulator implements Runnable {
 			double newEnergy = calcAtomEnergy(index, vars);
 	
 			double delE = newEnergy - oldEnergy;
+			double[][] diff = new double[4][3]; 
 			if (rand.nextDouble() <= Math.min(1, Math.exp(-delE * invBoltz / vars.temp))) {
-				curEnergySingle = curEnergySingle + delE;
+				// Find all basis state projections and the difference from the old value
 				double[][] projNew = allProjectionsSingle(index);
+				diff = arrayDiff(projNew, projOld);
 				
-				updateEnergy(curEnergySingle);
-				updateBaseProj(projOld, projNew);
+				// The change has been accepted and the energy is updated
+				curEnergySingle = curEnergySingle + delE;
 				nAccept += 1;
 			} else {
+				// Reset changes
 				setSpinDirection(index, old);
-				double[][] projNew = allProjectionsSingle(index);
-				
-				updateEnergy(curEnergySingle);
-				updateBaseProj(projOld, projNew);
+				// No need to calculate new projection, it is the same as the old..
+//				double[][] projNew = allProjectionsSingle(index);
 				nReject += 1;
 			}
+			// Save energy
+			updateEnergy(curEnergySingle);
+			// Update basis state projections
+			updateBaseProj(diff);
 		}
 
 	private void iterate2(Variables vars) {
@@ -267,6 +272,7 @@ public class Simulator implements Runnable {
 		// Choose a random atom
 		int[] indexA = chooseRandomAtom(rand);
 		int[][][] allNeighbours = crys.getNNIndices().clone();
+		
 		// Choose a random neighbour
 		int A = rand.nextInt(6);
 		int[] nbIndex = allNeighbours[A][rand.nextInt(allNeighbours[A].length)];
@@ -278,6 +284,7 @@ public class Simulator implements Runnable {
 		
 		Element elemA =  getAtom(indexA);
 		Element elemB =  getAtom(indexB);
+		
 
 		// Before change
 		double oldEnergy = calcNeighbourEnergy(indexA, nbIndex, vars);
@@ -286,29 +293,50 @@ public class Simulator implements Runnable {
 		double[][] projOldB = allProjectionsSingle(indexB);
 
 		// Create a new sample / make a small change / proposal spin:
-//		setSpinDirection(index, markovSurface(getSpinDirection(index)));
-		setSpinDirection(indexA, randomTurn(getSpinDirection(indexA)));
-//		setSpinDirection(index, randomVector());
-
+		setSpinDirection(indexA, spinB);
+		setSpinDirection(indexB, spinA);
+		setAtom(indexA, elemB);
+		setAtom(indexB, elemA);
+		
 		// Calculate energy and other values with new vector:
-		double newEnergy = calcAtomEnergy(indexA, vars);
+		double newEnergy = calcNeighbourEnergy(indexA, nbIndex, vars);
 
 		double delE = newEnergy - oldEnergy;
+		
+		double[][] diffA = new double[4][3];
+		double[][] diffB = new double[4][3];
 		if (rand.nextDouble() <= Math.min(1, Math.exp(-delE * invBoltz / vars.temp))) {
+			// Find all basis state projections and the difference from the old value
+			double[][] projNewA = allProjectionsSingle(indexA);
+			double[][] projNewB = allProjectionsSingle(indexB);
+			diffA = arrayDiff(projOldA, projNewA);
+			diffB = arrayDiff(projOldB, projNewB);
+			
+			// The change has been accepted and the energy is updated
 			curEnergySingle = curEnergySingle + delE;
-			double[][] projNew = allProjectionsSingle(indexA);
-			updateBaseProj(projOldA, projNew);
-			updateBaseProj(projOldA, projNew);
 			nAccept += 1;
 		} else {
+			// Reset changes
 			setSpinDirection(indexA, spinA);
 			setSpinDirection(indexB, spinB);
-			double[][] projNew = allProjectionsSingle(indexA);
-			updateBaseProj(projOldA, projNew);
 			nReject += 1;
 		}
+		// Save energy
+		updateEnergy(curEnergySingle);
+		// Update basis state projections
+		updateBaseProj(diffA);
+		updateBaseProj(diffB);
 	}
 	
+	private double[][] arrayDiff(double[][] projNew, double[][] projOld) {
+		double[][] diff = new double[4][3];
+		for (int state = 0; state < 4; state++) {
+			for (int coord = 0; coord < 3; coord++) {
+				diff[state][coord] = projNew[state][coord] - projOld[state][coord];
+			}
+		}
+		return diff;
+	}
 	private void flush(PrintStream out, Variables vars) {
 		double energy_Mean = energy_Sum / param.nSteps;
 		double energy_Sq = energy_SumSq / param.nSteps;
@@ -409,6 +437,7 @@ public class Simulator implements Runnable {
 		MyVector spinA = getSpinDirection(indexA).mult(getAtom(indexA).spin);
 		Element atomA = getAtom(indexA);
 
+		// Returns a list of neighbours for each coupling [Ja,Jb,Jc,Jbc,Jac,Jab]
 		int[][][] allNeighbours = crys.getNNIndices().clone();
 		for (int nJ = 0; nJ < allNeighbours.length; nJ++) {
 			int[][] nb_with_specific_J = allNeighbours[nJ];
@@ -502,11 +531,10 @@ public class Simulator implements Runnable {
 		// TODO Check that the new formulas work
 	}
 	
-	private void updateBaseProj(double[][] projOld, double[][] projNew) {
+	private void updateBaseProj(double[][] diff) {
 		for (int state = 0; state < 4; state++) {
-			for (int coord = 0; coord < 3; coord++) {
-				double diff = projNew[state][coord] - projOld[state][coord];
-				curBaseProj[state][coord] = curBaseProj[state][coord] + diff;
+			for (int coord = 0; coord < 3; coord++) {				
+				curBaseProj[state][coord] = curBaseProj[state][coord] + diff[state][coord];
 				// TODO Might try to take the absolute value of this instead
 				baseProj_Sum[state][coord] += curBaseProj[state][coord];
 				baseProj_SumSq[state][coord] += curBaseProj[state][coord] * curBaseProj[state][coord];

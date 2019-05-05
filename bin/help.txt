@@ -115,8 +115,7 @@ Description:
 
 Example usage:
 
-	setCommonParam 1000 4 8 8 Co
-	setCommonVars 2 0 0 0
-	scanT 25 -0.2 1
-	runSim Sim.dat
-	exit
+    setCommon 1000 6 6 6 Co
+    setVars 2 0 0 0
+    scanT 30 -0.1 2
+    runSim results.dat

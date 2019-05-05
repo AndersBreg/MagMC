@@ -60,6 +60,8 @@ public class simulationRunner {
 	private static File outputFile;
 	private static int repeat = 1;
 	private static boolean visExists = false;
+	
+	private static double speed = 140;
 
 	public static void main(String[] args) throws InterruptedException, IOException {
 
@@ -177,6 +179,9 @@ public class simulationRunner {
 			case "mkdir":
 				String newDirToCreate = lineArgs[1];
 				mkDir(newDirToCreate);
+				break;
+			case "printtime":
+				printExpectedTime();
 				break;
 				
 			case "loadconfigfile":
@@ -312,6 +317,11 @@ public class simulationRunner {
 		System.exit(0);
 	}
 	
+
+	private static void printExpectedTime() {
+		System.out.println("Expected time: " + simulationRunner.formatTime( (long) (varRange.size() * common.nSteps / speed)  ));
+	}
+
 
 	private static void printVars(List<Variables> vars) {
 		for (Iterator<Variables> iterator = vars.iterator(); iterator.hasNext();) {
