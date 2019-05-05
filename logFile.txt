@@ -1417,3 +1417,4 @@ Time and date: 05/05 15:53:51 File:scanCo_244_100000.txt Time taken: 16 min, 10 
 Time and date: 05/05 16:18:43 File:scanCo_244_10000_5e-1.txt Time taken: 6 min, 0 sec
 Time and date: 05/05 16:54:24 File:aniCheck4.txt Time taken: 6 min, 50 sec
 Time and date: 05/05 16:58:34 File:aniCheck5.txt Time taken: 0 min, 10 sec
+Time and date: 05/05 17:15:12 File:aniCheck5.txt Time taken: 1 min, 20 sec

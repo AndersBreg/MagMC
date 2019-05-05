@@ -29,8 +29,8 @@ public class Simulator implements Runnable {
 	private static final double gy = 2; // the g-factor of the electron
 	private static final double gz = 2; // the g-factor of the electron
 	public Crystal crys = Crystal.FCC;
-	public MyVector[] basis = crys.get();
-	public int nBasis = basis.length;
+	private MyVector[] basis = crys.get();
+	private int nBasis = basis.length;
 
 	public int nAtoms;
 	public Element[][][] atomType;
@@ -512,13 +512,13 @@ public class Simulator implements Runnable {
 		return proj;
 	}
 
-	public double projAtom(int[] index, BasisState basisState) {
+	private double projAtom(int[] index, BasisState basisState) {
 		MyVector spin = getSpinDirection(index);
 		double proj = basisState.projOnBasis(index, spin);
 		return proj / nAtoms;
 	}
 
-	public Complex projAtomIncom(int[] index, BasisStateIncom basisState) {
+	private Complex projAtomIncom(int[] index, BasisStateIncom basisState) {
 		MyVector spin = getSpinDirection(index);
 		Complex proj = new Complex(basisState.projOnBasis(index, spin), 0);
 		return proj.mult(1 / nAtoms);
@@ -532,7 +532,7 @@ public class Simulator implements Runnable {
 		// the partition function, the energy of all atoms are considered.
 		energy_SumSq += curEnergy * curEnergy;
 		energy_SumCube += curEnergy * curEnergy * curEnergy;
-		// TODO Check that the new formulas work
+		// TODO Check that the new formulas work. Yes they work! 
 	}
 
 	private void updateBaseProj(double[][] diff) {
@@ -651,7 +651,7 @@ public class Simulator implements Runnable {
 	/**
 	 * Scales the vector by the diagonal matrix diag(a,b,c)
 	 */
-	public MyVector scaleVec(double phiX, double phiY2, double phiZ, MyVector vec) {
+	private MyVector scaleVec(double phiX, double phiY2, double phiZ, MyVector vec) {
 		return new MyVector(phiX * vec.x, phiY2 * vec.y, phiZ * vec.z);
 	}
 
@@ -673,12 +673,12 @@ public class Simulator implements Runnable {
 		// }
 	}
 
-	public int[] addIndex(int[] local, int[] global) {
+	private int[] addIndex(int[] local, int[] global) {
 		return new int[] { global[0] + local[0], global[1] + local[1], global[2] + local[2] };
 	}
 
 	/* Iterators */
-	public Iterator<int[]> iterateUnitCells() {
+	Iterator<int[]> iterateUnitCells() {
 		List<int[]> list = new ArrayList<int[]>();
 		for (int i = 0; i < 2 * param.nX; i += 2) {
 			for (int j = 0; j < 2 * param.nY; j += 2) {
@@ -694,7 +694,7 @@ public class Simulator implements Runnable {
 		return list.iterator();
 	}
 
-	public Iterator<int[]> iterateAtoms() {
+	Iterator<int[]> iterateAtoms() {
 		List<int[]> list = new ArrayList<int[]>();
 		for (int i = 0; i < 2 * param.nX; i++) {
 			for (int j = 0; j < 2 * param.nY; j++) {
@@ -721,11 +721,11 @@ public class Simulator implements Runnable {
 		atomType[index[0]][index[1]][index[2]] = elem;
 	}
 
-	public Element getAtom(int[] index) {
+	Element getAtom(int[] index) {
 		return atomType[index[0]][index[1]][index[2]];
 	}
 
-	public MyVector getSpinDirection(int[] index) {
+	private MyVector getSpinDirection(int[] index) {
 		return spins[index[0]][index[1]][index[2]];
 	}
 
@@ -779,7 +779,7 @@ public class Simulator implements Runnable {
 		return (double) count / (double) nAtoms;
 	}
 
-	public void configFromBasisState(BasisState state) {
+	private void configFromBasisState(BasisState state) {
 		Iterator<int[]> it = iterateAtoms();
 		while (it.hasNext()) {
 			int[] atomIndex = (int[]) it.next();
@@ -789,7 +789,7 @@ public class Simulator implements Runnable {
 		}
 	}
 
-	public void setInitialConfig(MyVector[] list) {
+	private void setInitialConfig(MyVector[] list) {
 		Iterator<int[]> it = iterateUnitCells();
 		while (it.hasNext()) {
 			int[] cellIndex = it.next();
