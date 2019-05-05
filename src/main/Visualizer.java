@@ -232,7 +232,7 @@ public class Visualizer extends PApplet {
 		cursorPosY += 40;
 		text(var.toString(), cursorPosX, cursorPosY);
 		cursorPosY += 20;
-		text("Energy = " + master.currentEnergySingle / master.nAtoms, cursorPosX, cursorPosY);
+		text("Energy = " + master.curEnergySingle / master.nAtoms, cursorPosX, cursorPosY);
 		cursorPosY += 20;
 		text("Current step : " + master.step, cursorPosX, cursorPosY);
 		cursorPosY += 20;

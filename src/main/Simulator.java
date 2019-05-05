@@ -48,8 +48,7 @@ public class Simulator implements Runnable {
 	public int progress;
 
 	// Output values
-	public double currentEnergySingle;
-	private double energyTotal;
+	public double curEnergySingle;
 
 	private double energy_Sum = 0;
 	private double energy_SumSq = 0;
@@ -60,8 +59,8 @@ public class Simulator implements Runnable {
 	private double[][] baseProj_SumSq = new double[4][3];
 	private double[][] baseProj_SumQuad = new double[4][3];
 
-	private ArrayList<Double> energyMeans;
-	private ArrayList<Double[][]> baseProjMeans;
+//	private ArrayList<Double> energyMeans;
+//	private ArrayList<Double[][]> baseProjMeans;
 
 	private Random rand;
 
@@ -135,7 +134,7 @@ public class Simulator implements Runnable {
 		atomType = new Element[2 * param.nX][2 * param.nY][2 * param.nZ];
 		spins = new MyVector[2 * param.nX][2 * param.nY][2 * param.nZ];
 
-		if (seed != 0) {
+		if (seed != 0) {	
 			rand = new Random(seed);
 		} else {
 			rand = new Random();
@@ -161,7 +160,7 @@ public class Simulator implements Runnable {
 		PrintStream out = new PrintStream(output);
 		printParam(out);
 		out.println("Output: ");
-		out.println("Temp, Bx, By, Bz, E, E_sq, " + //
+		out.println("Temp, Bx, By, Bz, E, E_sq, E_cub, " + //
 		"Fx, Fx_sq, Fx_quad, Fy, Fy_sq, Fy_quad, Fz, Fz_sq, Fz_quad, " + // 
 		"Cx, Cx_sq, Cx_quad, Cy, Cy_sq, Cy_quad, Cz, Cz_sq, Cz_quad, " + //
 		"Ax, Ax_sq, Ax_quad, Ay, Ay_sq, Ay_quad, Az, Az_sq, Az_quad, " + //
@@ -209,8 +208,7 @@ public class Simulator implements Runnable {
 
 	private void simulate(PrintStream out, Variables vars) {
 		
-		currentEnergySingle = calcTotalEnergy(vars);
-		energyTotal = calcTotalEnergy(vars);
+		curEnergySingle = calcTotalEnergy(vars);
 		curBaseProj = allProjectionsTotal();
 		nReject = 0;
 		nAccept = 0;
@@ -220,15 +218,97 @@ public class Simulator implements Runnable {
 
 			iterate(vars);
 
-			try {
-				Thread.sleep(0, 0);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+//			try {
+//				Thread.sleep(0, 0);
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//			}
 		}
 		flush(out, vars);
 	}
 
+	private void iterate(Variables vars) {
+	
+			int[] index = chooseRandomAtom(rand);
+			MyVector old = getSpinDirection(index).copy();
+	
+			// Before change
+			double oldEnergy = calcAtomEnergy(index, vars);
+			double[][] projOld = allProjectionsSingle(index);
+	
+			// Create a new sample / make a small change / proposal spin:
+	//		setSpinDirection(index, markovSurface(getSpinDirection(index)));
+			setSpinDirection(index, randomTurn(getSpinDirection(index)));
+	//		setSpinDirection(index, randomVector());
+	
+			// Calculate energy and other values with new vector:
+			double newEnergy = calcAtomEnergy(index, vars);
+	
+			double delE = newEnergy - oldEnergy;
+			if (rand.nextDouble() <= Math.min(1, Math.exp(-delE * invBoltz / vars.temp))) {
+				curEnergySingle = curEnergySingle + delE;
+				double[][] projNew = allProjectionsSingle(index);
+				
+				updateEnergy(curEnergySingle);
+				updateBaseProj(projOld, projNew);
+				nAccept += 1;
+			} else {
+				setSpinDirection(index, old);
+				double[][] projNew = allProjectionsSingle(index);
+				
+				updateEnergy(curEnergySingle);
+				updateBaseProj(projOld, projNew);
+				nReject += 1;
+			}
+		}
+
+	private void iterate2(Variables vars) {
+
+		// Choose a random atom
+		int[] indexA = chooseRandomAtom(rand);
+		int[][][] allNeighbours = crys.getNNIndices().clone();
+		// Choose a random neighbour
+		int A = rand.nextInt(6);
+		int[] nbIndex = allNeighbours[A][rand.nextInt(allNeighbours[A].length)];
+		
+		int[] indexB = addIndex(indexA, nbIndex);
+		
+		MyVector spinA = getSpinDirection(indexA).copy();
+		MyVector spinB = getSpinDirection(indexB).copy();
+		
+		Element elemA =  getAtom(indexA);
+		Element elemB =  getAtom(indexB);
+
+		// Before change
+		double oldEnergy = calcNeighbourEnergy(indexA, nbIndex, vars);
+		
+		double[][] projOldA = allProjectionsSingle(indexA);
+		double[][] projOldB = allProjectionsSingle(indexB);
+
+		// Create a new sample / make a small change / proposal spin:
+//		setSpinDirection(index, markovSurface(getSpinDirection(index)));
+		setSpinDirection(indexA, randomTurn(getSpinDirection(indexA)));
+//		setSpinDirection(index, randomVector());
+
+		// Calculate energy and other values with new vector:
+		double newEnergy = calcAtomEnergy(indexA, vars);
+
+		double delE = newEnergy - oldEnergy;
+		if (rand.nextDouble() <= Math.min(1, Math.exp(-delE * invBoltz / vars.temp))) {
+			curEnergySingle = curEnergySingle + delE;
+			double[][] projNew = allProjectionsSingle(indexA);
+			updateBaseProj(projOldA, projNew);
+			updateBaseProj(projOldA, projNew);
+			nAccept += 1;
+		} else {
+			setSpinDirection(indexA, spinA);
+			setSpinDirection(indexB, spinB);
+			double[][] projNew = allProjectionsSingle(indexA);
+			updateBaseProj(projOldA, projNew);
+			nReject += 1;
+		}
+	}
+	
 	private void flush(PrintStream out, Variables vars) {
 		double energy_Mean = energy_Sum / param.nSteps;
 		double energy_Sq = energy_SumSq / param.nSteps;
@@ -246,7 +326,7 @@ public class Simulator implements Runnable {
 			}
 		}
 
-		printVals(out, vars, energy_Mean, energy_Sq, baseProj_Mean, baseProj_Sq, baseProj_Quad, nReject, nAccept);
+		printVals(out, vars, energy_Mean, energy_Sq, energy_Cube, baseProj_Mean, baseProj_Sq, baseProj_Quad, nReject, nAccept);
 
 		energy_Sum = 0;
 		energy_SumSq = 0;
@@ -261,7 +341,7 @@ public class Simulator implements Runnable {
 		}
 	}
 
-	private void printVals(PrintStream out, Variables vars, double energy_Mean, double energy_Sq,
+	private void printVals(PrintStream out, Variables vars, double energy_Mean, double energy_Sq, double energy_Cube,
 			double[][] baseProj_Mean, double[][] baseProj_Sq, double[][] baseProj_Quad, long nReject2, long nAccept2) {
 		out.print(String.format(PREC, vars.temp));
 		out.print(", ");
@@ -274,6 +354,8 @@ public class Simulator implements Runnable {
 		out.print(String.format(PREC, energy_Mean));
 		out.print(", ");
 		out.print(String.format(PREC, energy_Sq));
+		out.print(", ");
+		out.print(String.format(PREC, energy_Cube));
 		out.print(", ");
 
 		for (int state = 0; state < 4; state++) {
@@ -294,69 +376,6 @@ public class Simulator implements Runnable {
 		out.println();		
 	}
 	
-	private void printVals(PrintStream out, Variables vars, double energy_Mean, double energy_Var,
-			double[][] baseProjMean, double[][] baseProjVar, long nReject2, long nAccept2) {
-
-		out.print(String.format(PREC, vars.temp));
-		out.print(", ");
-		out.print(String.format(PREC, vars.B.x));
-		out.print(", ");
-		out.print(String.format(PREC, vars.B.y));
-		out.print(", ");
-		out.print(String.format(PREC, vars.B.z));
-		out.print(", ");
-		out.print(String.format(PREC, energy_Mean));
-		out.print(", ");
-		out.print(String.format(PREC, energy_Var));
-		out.print(", ");
-
-		for (int state = 0; state < 4; state++) {
-			for (int coord = 0; coord < 3; coord++) {
-				out.print(String.format(PREC, baseProjMean[state][coord]));
-				out.print(", ");
-				out.print(String.format(PREC, baseProjVar[state][coord]));
-				out.print(", ");
-			}
-		}
-		out.print(nReject);
-		out.print(", ");
-		out.print(nAccept);
-		out.print(", ");
-
-		out.println();
-	}
-
-	private void iterate(Variables vars) {
-
-		int[] index = chooseRandomAtom(rand);
-		MyVector old = getSpinDirection(index).copy();
-
-		// Before change
-		double oldEnergy = calcAtomEnergy(index, vars);
-		double[][] projOld = allProjectionsSingle(index);
-
-		// Create a new sample / make a small change / proposal spin:
-//		setSpinDirection(index, markovSurface(getSpinDirection(index)));
-		setSpinDirection(index, randomTurn(getSpinDirection(index)));
-//		setSpinDirection(index, randomVector());
-
-		// Calculate energy and other values with new vector:
-		double newEnergy = calcAtomEnergy(index, vars);
-
-		double delE = newEnergy - oldEnergy;
-		if (rand.nextDouble() <= Math.min(1, Math.exp(-delE * invBoltz / vars.temp))) {
-			currentEnergySingle = currentEnergySingle + delE;
-			double[][] projNew = allProjectionsSingle(index);
-			updateBaseProj(projOld, projNew);
-			nAccept += 1;
-		} else {
-			setSpinDirection(index, old);
-			double[][] projNew = allProjectionsSingle(index);
-			updateBaseProj(projOld, projNew);
-			nReject += 1;
-		}
-	}
-
 	/* Energy calculations: */
 	private double calcTotalEnergy(Variables vars) {
 		double E = 0;
@@ -407,6 +426,24 @@ public class Simulator implements Runnable {
 		return E;
 	}
 
+	private double calcNeighbourEnergy(int[] indexA, int[] nbIndex, Variables vars) {
+		// TODO Auto-generated method stub
+		double E = 0;
+
+		// Field energy:
+		E += calcFieldEnergy(indexA, vars.B);
+		E += calcFieldEnergy(addIndex(nbIndex, indexA), vars.B);
+
+		// Single-ion anisotropy:
+		E += calcAniEnergy(indexA);
+		E += calcAniEnergy(addIndex(nbIndex, indexA));
+
+		// NN couplings of both atoms
+		E += 2 * calcCouplingEnergy(indexA);
+		E += 2 * calcCouplingEnergy(addIndex(nbIndex, indexA));
+
+		return E;
+	}
 	private boolean isInside(int[] ind) {
 		if (ind[0] < 0 || ind[1] < 0 || ind[2] < 0 || ind[0] >= (2 * param.nX) || ind[1] >= (2 * param.nY)
 				|| ind[2] >= (2 * param.nZ)) {
@@ -455,14 +492,17 @@ public class Simulator implements Runnable {
 		return proj.mult(1 / nAtoms);
 	}
 
+	private void updateEnergy(double curEnergy) {
+		energy_Sum += curEnergy;
+		// Find out whether there should be divided with the number of atoms again. Maybe make a simpler Monte Carlo example?
+		// Conclusion: save all the quantities in total, not pr atom. When calculating
+		// the partition function, the energy of all atoms are considered.
+		energy_SumSq += curEnergy * curEnergy;
+		energy_SumCube += curEnergy * curEnergy * curEnergy;
+		// TODO Check that the new formulas work
+	}
+	
 	private void updateBaseProj(double[][] projOld, double[][] projNew) {
-		double energyPrAtom = currentEnergySingle / nAtoms;
-		energy_Sum += energyPrAtom;
-		energy_SumSq += energyPrAtom*energyPrAtom;
-		// TODO check that the cube calculation is correct!
-		energy_SumCube += energyPrAtom*energyPrAtom*energyPrAtom;
-//		energy_SumQuad += Math.pow(currentEnergySingle / nAtoms, 4);
-
 		for (int state = 0; state < 4; state++) {
 			for (int coord = 0; coord < 3; coord++) {
 				double diff = projNew[state][coord] - projOld[state][coord];
@@ -473,67 +513,6 @@ public class Simulator implements Runnable {
 				baseProj_SumQuad[state][coord] += Math.pow(curBaseProj[state][coord], 4);
 			}
 		}
-		// double fX = projBasisStateTotal(Crystal.Fx); // Alternative use
-		// calcMagnetization(0);
-		// double fY = projBasisStateTotal(Crystal.Fy);
-		// double fZ = projBasisStateTotal(Crystal.Fz);
-		// double fX = projTotal(BasisStateAlt.Fx );
-		// double fY = projTotal(BasisStateAlt.Fy );
-		// double fZ = projTotal(BasisStateAlt.Fz );
-
-		// double cX = projBasisStateTotal(Crystal.Cx);
-		// double cY = projBasisStateTotal(Crystal.Cy);
-		// double cZ = projBasisStateTotal(Crystal.Cz);
-		// double cX = projTotal(BasisStateAlt.Cx );
-		// double cY = projTotal(BasisStateAlt.Cy );
-		// double cZ = projTotal(BasisStateAlt.Cz );
-
-		// double aX = projBasisStateTotal(Crystal.Ax);
-		// double aY = projBasisStateTotal(Crystal.Ay);
-		// double aZ = projBasisStateTotal(Crystal.Az);
-		// double aX = projTotal(BasisStateAlt.Ax);
-		// double aY = projTotal(BasisStateAlt.Ay);
-		// double aZ = projTotal(BasisStateAlt.Az);
-
-		// double gX = projBasisStateTotal(Crystal.Gx);
-		// double gY = projBasisStateTotal(Crystal.Gy);
-		// double gZ = projBasisStateTotal(Crystal.Gz);
-		// double gX = projTotal(BasisStateAlt.Gx);
-		// double gY = projTotal(BasisStateAlt.Gy);
-		// double gZ = projTotal(BasisStateAlt.Gz);
-
-		/* Equivalent to baseProjSum and baseProjSumSq */
-		// sumFX += fX;
-		// sumFY += fY;
-		// sumFZ += fZ;
-		//
-		// sumCX += cX;
-		// sumCY += cY;
-		// sumCZ += cZ;
-		//
-		// sumAX += aX;
-		// sumAY += aY;
-		// sumAZ += aZ;
-		//
-		// sumGX += gX;
-		// sumGY += gY;
-		// sumGZ += gZ;
-		//
-		// sumFX_Sq += fX*fX;
-		// sumFY_Sq += fY*fY;
-		// sumFZ_Sq += fZ*fZ;
-		//
-		// sumCX_Sq += cX*cX;
-		// sumCY_Sq += cY*cY;
-		// sumCZ_Sq += cZ*cZ;
-		//
-		// sumAX_Sq += aX*aX;
-		// sumAY_Sq += aY*aY;
-		// sumAZ_Sq += aZ*aZ;
-		//
-		// sumGX_Sq += gX*gX;
-		// sumGY_Sq += gY*gY;
-		// sumGZ_Sq += gZ*gZ;
 	}
 
 	private double[][] allProjectionsSingle(int[] index) {
@@ -594,7 +573,7 @@ public class Simulator implements Runnable {
 		return vec;
 	}
 
-	/**
+	/** @deprecated
 	 * Generates a new vector a little different from the previous
 	 */
 	private MyVector markovSurface(MyVector S) {
@@ -720,6 +699,11 @@ public class Simulator implements Runnable {
 		spins[index[0]][index[1]][index[2]] = newSpin;
 	}
 
+	/**
+	 * @deprecated
+	 * @param coord
+	 * @return
+	 */
 	private double calcMagnetization(int coord) {
 		double mu = 0;
 		Iterator<int[]> it = iterateAtoms();

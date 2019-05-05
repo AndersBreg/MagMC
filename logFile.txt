@@ -1396,3 +1396,21 @@ Time and date: 01/29 17:29:26 Time taken: 0 min, 6 sec
 Time and date: 01/29 17:29:50 Time taken: 0 min, 5 sec
 Time and date: 01/29 17:30:34 Time taken: 0 min, 27 sec
 Time and date: 01/30 12:07:54 File:Anisotropy_check_double_low_it.dat Time taken: 11 min, 40 sec
+Time and date: 05/01 22:54:46 File:scanCo.txt Time taken: 1 min, 40 sec
+Time and date: 05/01 23:36:44 File:scanCo2.txt Time taken: 28 min, 40 sec
+Time and date: 05/02 00:00:13 File:scanCo3.txt Time taken: 7 min, 40 sec
+Time and date: 05/02 00:45:11 File:scanCo1.txt Time taken: 0 min, 30 sec
+Time and date: 05/02 00:45:54 File:scanCo1.txt Time taken: 0 min, 20 sec
+Time and date: 05/02 00:48:02 File:scanCo2.txt Time taken: 2 min, 0 sec
+Time and date: 05/02 07:18:17 File:scanCo3.txt Time taken: 371 min, 4 sec
+Time and date: 05/02 11:12:49 File:aniCheck.txt Time taken: 1 min, 5 sec
+Time and date: 05/02 11:27:25 File:aniCheck2.txt Time taken: 2 min, 40 sec
+Time and date: 05/02 11:30:48 File:aniCheck3.txt Time taken: 1 min, 0 sec
+Time and date: 05/02 12:36:31 File:aniCheck4.txt Time taken: 22 min, 20 sec
+Time and date: 05/02 14:22:24 File:aniCheck5.txt Time taken: 11 min, 30 sec
+Time and date: 05/03 16:11:56 File:aniCheck6.txt Time taken: 3 min, 40 sec
+Time and date: 05/03 16:18:24 File:aniCheck1.txt Time taken: 0 min, 10 sec
+Time and date: 05/03 16:19:26 File:aniCheck2.txt Time taken: 0 min, 50 sec
+Time and date: 05/03 16:41:46 File:aniCheck3.txt Time taken: 6 min, 10 sec
+Time and date: 05/05 15:36:48 File:scanCo_244_1000000.txt Time taken: 1 min, 30 sec
+Time and date: 05/05 15:53:51 File:scanCo_244_100000.txt Time taken: 16 min, 10 sec
