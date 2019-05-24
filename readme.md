@@ -1,4 +1,4 @@
-## MagMC
+# MagMC
 
 Presenting MagMC, the simulation tool for performing Markov Chain Monte Carlo simulations on lihium orthophosphates.
 
@@ -9,11 +9,11 @@ java -jar MagMC.jar
 Then the commands to run can be input. Every command argument starting with a # as the first character will be treated as a comment. (This makes it possible to input commands from a file.)
 
 
-### List of commands:
+## List of commands:
 		disableConfigFile, disableVis, enableConfigFile, enableVis, help, loadConfigFile, mkDir, modifyelement, printDir, printParam, resetDir, saveConfigFile, scanBx, scanBy, scanBz, scanT, setDir, setParam, setVars. scananglebyz, scantbx, repeat/setrepeat, printparam, printvar, printdir, resetdir, mkdir, loadconfigfile, saveconfigfile, savecurrentconfig, enableconfigfile, disableConfigFile, enableSaveAllConfigs, disableSaveAllConfigs, 
 		disableVis, disablePeriodic, enablePeriodic, runsim, wait, exit
 		
-#### Description:
+### Description:
 - help 
     - Displays this text.
 - setCommonParam MCS N\_x N\_y N\_z ELEM
@@ -77,7 +77,7 @@ Then the commands to run can be input. Every command argument starting with a # 
 - exit/quit
 	- Quits the program.
 
-#### Example usage:
+## Example usage:
 	    
 	    setCommon 1000 6 6 6 Co
 	    setVars 2 0 0 0
