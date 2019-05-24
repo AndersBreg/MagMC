@@ -4,7 +4,7 @@ Presenting MagMC, the simulation tool for performing Markov Chain Monte Carlo si
 
 Run the program with the following command:
 
-java -jar MagMC.jar
+java -jar MCMC_Mag.jar
 
 Then the commands to run can be input. Every command argument starting with a # as the first character will be treated as a comment. (This makes it possible to input commands from a file.)
 
