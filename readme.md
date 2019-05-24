@@ -12,44 +12,38 @@ Then the commands to run can be input. Every command argument starting with a # 
 		disableVis, disablePeriodic, enablePeriodic, runsim, wait, exit
 		
 	Description:
-		-help 
+		*help 
 			Displays this text.
 		
-		-setCommonParam MCS N_x N_y N_z ELEM
+		*setCommonParam MCS N_x N_y N_z ELEM
 			Sets the configuration for the simulation, that is the number of 
 			monte carlo steps, MCS, the dimensions N_x N_y and N_z, and the default element ELEM for the array. The element can be either Co, Ni, Fe or Mn (and case matters).
 		
-		-printParam
+		*printParam
 			Prints the parameters for the configuration and the atom array. 
 		
-		-setCommonVars T B_x B_y B_z
+		*setCommonVars T B_x B_y B_z
 			Sets the default values for the thermodynamic parameters, T, B_x, B_y, B_z, 
 			where B is the external applied magnetic field.
 		
-		-scanpoint
+		*scanpoint
 		
-		-scanT T_start dT T_end
+		*scanT T_start dT T_end
 			Makes a scan ramping up or down the temp, starting at T_start.
 
-		-scanBx B_start dB B_end
-		-scanBy B_start dB B_end
-		-scanBz B_start dB B_end
-			Makes a scan ramping up or down the x/y/z-component of the applied field. 
+        *scanB[x/y/z]
+			Makes a scan ramping up or down the x/y/z*component of the applied field. 
 			The scan starts at B_start ends at B_end, and increments by dB.
 
-		-scanTBx T_start dT T_end B_start dB B_end
-		-scanTBy T_start dT T_end B_start dB B_end
-		-scanTBz T_start dT T_end B_start dB B_end
-			Makes a scan over a square in T-B space, over the interval 
+        *scanTB[x/y/z] T_start dT T_end B_start dB B_end
+			Makes a scan over a square in T*B space, over the interval 
 			[T_start, T_end] x [B_start, B_end] with increments of dT and dB.
+        
+	    *scanAngleB[x/y/z][x/y/z] Theta_start dTheta Theta_end
+		    Makes a scan over different angles for the applied magnetic field. 
+		    The angle is varied from Theta_start to Theta_end in increments of dTheta.
 
-		-scanAngleBxy Theta_start dTheta Theta_end
-		-scanAngleByz Theta_start dTheta Theta_end
-		-scanAngleBzx Theta_start dTheta Theta_end
-			Makes a scan over different angles for the applied magnetic field. 
-			The angle is varied from Theta_start to Theta_end in increments of dTheta.
-
-		-modifyelement ELEM PARAM VALUE
+		*modifyelement ELEM PARAM VALUE
 			Modify the parameter given by PARAM of the element ELEM, to be the value VALUE.
 			The parameters are numbered as: 
 			0: Ja, 
@@ -64,53 +58,53 @@ Then the commands to run can be input. Every command argument starting with a # 
 			e.g. to change the Jbc of Co to be 0.4, do
 				modifyelement Co 3 0.4
 				
-		-setRepeat NUM
+		*setRepeat NUM
 			Sets that each simulation should be repeated a number of times given by NUM. 
 			(In effect multiplies the points added to the queue.)
 		
-		-enableVis/disableVis
+		*enableVis/disableVis
 			Enables or disables the use of a visualiser. If run on a computer cluster, 
 			this should be disabled. Is disabled by default.
 		
-		-enablePeriodic/disablePeriodic
+		*enablePeriodic/disablePeriodic
 			Enables or disables periodic boundary conditions. Is enabled by default.
 		
-		-loadConfigFile FILE
-			Loads in the configuration of the atom array from a config-file FILE. 
+		*loadConfigFile FILE
+			Loads in the configuration of the atom array from a config*file FILE. 
 			This loads both what element should be at each position and the direction of the spin. 
 		
-		-saveCurrentConfig FILE
-			Saves the configuration of the atom array to a config-file FILE.
+		*saveCurrentConfig FILE
+			Saves the configuration of the atom array to a config*file FILE.
 			This saves both what element are at each position and the direction of the spin.
 		
-		-mkDir DIR
+		*mkDir DIR
 			Attempts to create the directory given by the string DIR.
 			
-		-resetDir
+		*resetDir
 			Resets the directory for where to save results, to the default location. 
 			(This is a folder named Data, which is created if it does not exist)
 		
-		-printDir
+		*printDir
 			Prints the default directory for which to save the results,  
 		
-		-printVars
-			Prints the current queue of [T,B]-points to simulate.   
+		*printVars
+			Prints the current queue of [T,B]-points to simulate.
 		
-		-enableConfigFile/disableConfigFile
+		*enableConfigFile/disableConfigFile
 			Enable/disable the use of a file for saving the configuration. If not set
 		
-		-enableSaveAllConfigs/disableSaveAllConfig
+		*enableSaveAllConfigs/disableSaveAllConfig
 			
-		-runSim [FILE]
-			Starts the simulation, with a copy of the current queue of [T,B]-points to simulate. 
+		*runSim [FILE]
+			Starts the simulation, with a copy of the current queue of [T,B]*points to simulate. 
 			If the optional parameter FILE is given, the results are saved there, otherwise result 
 			will be printed to standard out/system.out
 			
-		-wait
+		*wait
 			Halts the program for 10 seconds. Intended for inspecting visually the resulting 
 			magnetic ordering. Cannot be used while a simulation is underway.
 			
-		-exit/quit
+		*exit/quit
 			Quits the program.
 			
 			
