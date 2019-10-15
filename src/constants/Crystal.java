@@ -5,19 +5,46 @@ import main.MyVector;
 public enum Crystal {
 
 	SC ( new MyVector[] { 
-			new MyVector(0, 0, 0) } ),
+			new MyVector(0, 0, 0) }, 
+		new int[][][] {
+			{{1,0,0},{-1,0,0}},
+			{{0,1,0},{0,-1,0}},
+			{{0,0,1},{0,0,-1}}
+		}
+	),
 	BCC ( new MyVector[] { 
-			new MyVector(0.0f, 0.0f, 0.0f), new MyVector(0.5f, 0.5f, 0.5f)} ),
-	FCC ( new MyVector[] { 
-			new MyVector(0.0f, 0.0f, 0.0f), new MyVector(0.0f, 0.5f, 0.5f), 
-			new MyVector(0.5f, 0.0f, 0.5f), new MyVector(0.5f, 0.5f, 0.0f) });
+			new MyVector(0.0f, 0.0f, 0.0f), //
+			new MyVector(0.5f, 0.5f, 0.5f)
+			},
+		new int[][][] {
+			{{2,0,0},{-2,0,0}},
+			{{0,2,0},{0,-2,0}},
+			{{0,0,2},{0,0,-2}},
+			{{1,1,1},{1,1,-1},{1,-1,1},{-1,1,1},{1,-1,-1},{-1,1,-1},{-1,-1,1},{-1,-1,-1}},
+		}
+	),
+	FCC(new MyVector[] { //
+			new MyVector(0.0f, 0.0f, 0.0f), new MyVector(0.0f, 0.5f, 0.5f), //
+			new MyVector(0.5f, 0.0f, 0.5f),	new MyVector(0.5f, 0.5f, 0.0f) 
+		}, //
+		new int[][][] { 
+			{ { 2, 0, 0 }, { -2, 0, 0 } }, 
+			{ { 0, 2, 0 }, { 0, -2, 0 } }, 
+			{ { 0, 0, 2 }, { 0, 0, -2 } },
+			{ { 0, 1, 1 }, { 0, -1, 1 }, { 0, -1, -1 }, { 0, 1, -1 } },
+			{ { 1, 0, 1 }, { 1, 0, -1 }, { -1, 0, -1 }, { -1, 0, 1 } },
+			{ { 1, 1, 0 }, { -1, 1, 0 }, { -1, -1, 0 }, { 1, -1, 0 } } 
+		}
+	);
 	
 	private final MyVector[] basis;
 	private final int nBasis;
+	public final int[][][] neighbours;
 	
-	Crystal(MyVector[] basis){
+	Crystal(MyVector[] basis, int[][][] neighbours){
 		this.basis = basis;
 		this.nBasis = basis.length;
+		this.neighbours = neighbours;
 	}
 	
 	public MyVector[] get(){
@@ -41,31 +68,8 @@ public enum Crystal {
 		return new int[][] {{0,0,0},{0,1,1},{1,0,1},{1,1,0}};
 	}
 
-	public int[][][] getNNIndices() {
-		switch(this) {
-			case FCC:
-				return new int[][][] {
-					{{2,0,0},{-2,0,0}},
-					{{0,2,0},{0,-2,0}},
-					{{0,0,2},{0,0,-2}},
-					{{0,1,1},{0,-1,1},{0,-1,-1},{0,1,-1}},
-					{{1,0,1},{1,0,-1},{-1,0,-1},{-1,0,1}},
-					{{1,1,0},{-1,1,0},{-1,-1,0},{1,-1,0}}
-				};
-			case BCC:
-				return new int[][][] {
-					{{0,1,1},{0,-1,1}},
-					{{1,0,1},{}},
-					{{1,1,0},{}}
-				};
-			case SC:
-				return new int[][][] {
-					{{1,0,0},{-1,0,0}},
-					{{0,1,0},{0,-1,0}},
-					{{0,0,1},{0,0,-1}}
-				};	
-		}
-		return null;
+	public final int[][][] getNNIndices() {
+		return neighbours;
 	}
 	
 	private static MyVector[] permute(MyVector[] vecList) {

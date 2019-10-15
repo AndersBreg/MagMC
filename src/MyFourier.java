@@ -3,8 +3,7 @@ import java.util.Iterator;
 import constants.BasisState;
 import main.MyVector;
 import main.Simulator;
-
-import math.Complex;
+import main.Complex;
 
 public class MyFourier {
 	

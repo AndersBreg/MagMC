@@ -32,7 +32,7 @@ public class Visualizer extends PApplet {
 		float FoV = PI / 3.0f;
 		float aspectRatio = (float) width / (float) height;
 		perspective(FoV, aspectRatio, 1f, cameraZ * 100.0f);
-		sphereDetail(10);
+		sphereDetail(6);
 	}
 
 	// static final void removeExitEvent(final PSurface surf) {
@@ -232,7 +232,7 @@ public class Visualizer extends PApplet {
 		cursorPosY += 40;
 		text(var.toString(), cursorPosX, cursorPosY);
 		cursorPosY += 20;
-		text("Energy = " + master.currentEnergySingle / master.nAtoms, cursorPosX, cursorPosY);
+		text("Energy = " + master.curEnergySingle / master.nAtoms, cursorPosX, cursorPosY);
 		cursorPosY += 20;
 		text("Current step : " + master.step, cursorPosX, cursorPosY);
 		cursorPosY += 20;

@@ -1,7 +1,7 @@
 package constants;
 
 import main.MyVector;
-import math.Complex;
+import main.Complex;
 
 public enum BasisStateIncom {
 	

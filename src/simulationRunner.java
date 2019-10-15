@@ -60,6 +60,13 @@ public class simulationRunner {
 	private static File outputFile;
 	private static int repeat = 1;
 	private static boolean visExists = false;
+	
+	private static double speed = 140;
+	
+	private static double CoFrac = 0;
+	private static double FeFrac = 0;
+	private static double NiFrac = 0;
+	private static double MnFrac = 0;
 
 	public static void main(String[] args) throws InterruptedException, IOException {
 
@@ -73,14 +80,13 @@ public class simulationRunner {
 		System.out.println("Welcome to magnetic monte carlo Markov chain simulator utility");
 		while (in.hasNext()) {
 			String line = in.nextLine();
-			System.out.println("Executing command: " + line);
 			String[] lineArgs = line.split(" ");
 			if (lineArgs.length < 1)
 				break;
 			String command = lineArgs[0];
 			if (lineArgs[0].charAt(0) == '#')
 				continue;
-			
+			System.out.println("Executing command: " + line);
 			switch (command.toLowerCase()) {
 			case "setparam":
 			case "setparameters":
@@ -177,6 +183,9 @@ public class simulationRunner {
 			case "mkdir":
 				String newDirToCreate = lineArgs[1];
 				mkDir(newDirToCreate);
+				break;
+			case "printtime":
+				printExpectedTime();
 				break;
 				
 			case "loadconfigfile":
@@ -280,7 +289,7 @@ public class simulationRunner {
 							throw new IOException("Outputfile already exists.");
 						}
 					}
-					runSimul(common, varRange);
+					runSimulation(common, varRange);
 					varRange.clear();
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -291,12 +300,19 @@ public class simulationRunner {
 			case "modify":
 				modifyElement(lineArgs);
 				break;
+			case "setelementfraction":
+			case "setelementfrac":
+			case "setelemfrac":
+			case "setfrac":
+				setElementFrac(lineArgs);
+				break;
 			case "help":
 			case "h":
 //				writeHelp();
 				break;
 			case "wait":
 				Thread.sleep((long) 10000);
+				break;
 			case "exit":
 			case "":
 //				System.out.println("Program exits.");
@@ -312,6 +328,41 @@ public class simulationRunner {
 		System.exit(0);
 	}
 	
+	private static void setElementFrac(String[] lineArgs) {
+		// TODO Auto-generated method stub
+		double frac = Double.parseDouble(lineArgs[2]);
+		switch (Element.valueOf(lineArgs[1])) {
+		case Co:
+			CoFrac = frac;
+			NiFrac *= 1 - frac;
+			MnFrac *= 1 - frac;
+			FeFrac *= 1 - frac;
+			break;
+		case Ni:
+			NiFrac = frac;
+			CoFrac *= 1 - frac;
+			MnFrac *= 1 - frac;
+			FeFrac *= 1 - frac;
+			break;
+		case Fe:
+			FeFrac = frac;
+			NiFrac *= 1 - frac;
+			MnFrac *= 1 - frac;
+			CoFrac *= 1 - frac;
+			break;
+		case Mn:
+			MnFrac = frac;
+			NiFrac *= 1 - frac;
+			CoFrac *= 1 - frac;
+			FeFrac *= 1 - frac;
+			break;
+		}
+	}
+
+	private static void printExpectedTime() {
+		System.out.println("Expected time: " + simulationRunner.formatTime( (long) (varRange.size() * common.nSteps / speed)  ));
+	}
+
 
 	private static void printVars(List<Variables> vars) {
 		for (Iterator<Variables> iterator = vars.iterator(); iterator.hasNext();) {
@@ -386,7 +437,7 @@ public class simulationRunner {
 		}
 	}
 
-	private static void runSimul(Parameters param, List<Variables> varRange) throws InterruptedException, IOException {
+	private static void runSimulation(Parameters param, List<Variables> varRange) throws InterruptedException, IOException {
 		
 //		if (!curDir.exists() || !curDir.isDirectory()) {
 //			throw new IOException();
@@ -561,8 +612,23 @@ public class simulationRunner {
 		int nX = Integer.parseInt(args[2]);
 		int nY = Integer.parseInt(args[3]);
 		int nZ = Integer.parseInt(args[4]);
+		Element baseElem = Element.valueOf(args[5]);
+		switch (baseElem) {
+		case Ni:
+			NiFrac = 1.0;
+			break;
+		case Co:
+			CoFrac = 1.0;
+			break;
+		case Fe:
+			FeFrac = 1.0;
+			break;
+		case Mn:
+			MnFrac = 1.0;
+			break;
+		}
 		commonParam = new Parameters(new long[] {MonteCarloSteps, nX, nY, nZ});
-		commonParam.baseElem = Element.valueOf(args[5]);
+		commonParam.baseElem = baseElem;
 		if (args.length == 8) {
 			commonParam.initState = BasisState.valueOf(args[6]);
 		}
@@ -612,6 +678,14 @@ public class simulationRunner {
 			} else {
 				sim = new Simulator(param, varList, out, periodicBoundaries);
 				configFile = curDir.toPath().resolve(name + ".conf").toFile();
+				try {
+					sim.setElementFraction(Element.Co, CoFrac);
+					sim.setElementFraction(Element.Ni, NiFrac);
+					sim.setElementFraction(Element.Mn, MnFrac);
+					sim.setElementFraction(Element.Fe, FeFrac);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		} else {
 			System.out.println("Uses existing simulator.");
