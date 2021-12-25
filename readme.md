@@ -1,6 +1,6 @@
 # MagMC
 
-Presenting MagMC, the simulation tool for performing Markov Chain Monte Carlo simulations on lihium orthophosphates.
+Presenting MagMC, the simulation tool for performing Markov Chain Monte Carlo simulations on lihium orthophosphates. This repo has been copied over from an earlier Gitlab repository at https://gitlab.gbar.dtu.dk/s134272/MagMC 
 
 Run the program with the following command:
 
